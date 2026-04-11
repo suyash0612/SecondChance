@@ -1,0 +1,201 @@
+import { create } from "zustand";
+import type {
+  Patient, MedDocument, Medication, Condition, Allergy,
+  LabResult, Encounter, TimelineEvent, DoctorSummary, FilterCategory,
+} from "./types";
+
+// ════════════════════════════════════════════════════════════════
+//  SEED DATA
+// ════════════════════════════════════════════════════════════════
+
+const PAT: Patient = {
+  id: "p1", firstName: "Maria", lastName: "Santos",
+  dateOfBirth: "1978-03-15", sex: "Female",
+  phone: "(555) 014-2389", email: "maria.santos@email.com",
+  emergencyContact: { name: "Carlos Santos", phone: "(555) 014-2390", relationship: "Spouse" },
+  insurance: "Blue Cross Blue Shield", memberId: "XYZ-12345678",
+};
+
+const DOCS: MedDocument[] = [
+  { id: "d1", fileName: "annual_physical_2025.pdf", mimeType: "application/pdf", uploadedAt: "2025-11-02T09:30:00Z", classification: "Progress Note", extractionStatus: "completed", pages: 3, extractedDate: "2025-10-28", extractedProvider: "Dr. Sarah Chen", extractedFacility: "Downtown Family Medicine" },
+  { id: "d2", fileName: "blood_work_oct2025.pdf", mimeType: "application/pdf", uploadedAt: "2025-11-01T14:15:00Z", classification: "Lab Report", extractionStatus: "completed", pages: 2, extractedDate: "2025-10-15", extractedProvider: "Dr. Sarah Chen", extractedFacility: "Quest Diagnostics" },
+  { id: "d3", fileName: "cardiology_consult.pdf", mimeType: "application/pdf", uploadedAt: "2025-09-20T11:00:00Z", classification: "Consult Note", extractionStatus: "completed", pages: 4, extractedDate: "2025-09-15", extractedProvider: "Dr. James Miller", extractedFacility: "Mercy Heart Center" },
+  { id: "d4", fileName: "mri_lumbar_spine.pdf", mimeType: "application/pdf", uploadedAt: "2024-09-10T16:45:00Z", classification: "Imaging Report", extractionStatus: "completed", pages: 2, extractedDate: "2024-09-06", extractedProvider: "Dr. Lisa Wong", extractedFacility: "Mercy General Radiology" },
+  { id: "d5", fileName: "er_visit_back_pain.pdf", mimeType: "application/pdf", uploadedAt: "2024-09-08T10:20:00Z", classification: "Discharge Summary", extractionStatus: "completed", pages: 3, extractedDate: "2024-09-05", extractedProvider: "Dr. Robert Kim", extractedFacility: "Mercy General ER" },
+  { id: "d6", fileName: "endocrinology_followup.pdf", mimeType: "application/pdf", uploadedAt: "2025-10-22T09:00:00Z", classification: "Progress Note", extractionStatus: "completed", pages: 2, extractedDate: "2025-10-20", extractedProvider: "Dr. Aisha Patel", extractedFacility: "Mercy Endocrine Clinic" },
+];
+
+const MEDS: Medication[] = [
+  { id: "m1", name: "Metformin", dosage: "500mg", frequency: "Twice daily", status: "active", startDate: "2021-06-15", prescriber: "Dr. Aisha Patel", reason: "Type 2 Diabetes", source: "extracted", sourceDocId: "d6", confidence: 0.95 },
+  { id: "m2", name: "Lisinopril", dosage: "10mg", frequency: "Once daily", status: "active", startDate: "2020-03-22", prescriber: "Dr. James Miller", reason: "Hypertension", source: "extracted", sourceDocId: "d3", confidence: 0.92 },
+  { id: "m3", name: "Atorvastatin", dosage: "20mg", frequency: "At bedtime", status: "active", startDate: "2022-01-10", prescriber: "Dr. Sarah Chen", reason: "High cholesterol", source: "manual", confidence: 1.0 },
+  { id: "m4", name: "Ibuprofen", dosage: "400mg", frequency: "As needed", status: "discontinued", startDate: "2024-09-05", endDate: "2024-11-15", prescriber: "Dr. Robert Kim", reason: "Back pain", source: "extracted", sourceDocId: "d5", confidence: 0.88 },
+];
+
+const CONDS: Condition[] = [
+  { id: "c1", name: "Type 2 Diabetes Mellitus", icd10: "E11.9", status: "managed", onsetDate: "2021-06", diagnosedBy: "Dr. Aisha Patel", source: "extracted", sourceDocId: "d6", confidence: 0.97 },
+  { id: "c2", name: "Essential Hypertension", icd10: "I10", status: "managed", onsetDate: "2020-03", diagnosedBy: "Dr. James Miller", source: "extracted", sourceDocId: "d3", confidence: 0.96 },
+  { id: "c3", name: "Hyperlipidemia", icd10: "E78.5", status: "managed", onsetDate: "2022-01", diagnosedBy: "Dr. Sarah Chen", source: "extracted", sourceDocId: "d1", confidence: 0.91 },
+  { id: "c4", name: "Low Back Pain", icd10: "M54.5", status: "resolved", onsetDate: "2024-08", resolvedDate: "2024-12", diagnosedBy: "Dr. Robert Kim", source: "extracted", sourceDocId: "d5", confidence: 0.82 },
+];
+
+const ALRG: Allergy[] = [
+  { id: "a1", substance: "Penicillin", reaction: "Hives, throat swelling", severity: "severe", source: "manual" },
+  { id: "a2", substance: "Sulfa drugs", reaction: "Rash", severity: "moderate", source: "extracted", sourceDocId: "d1" },
+];
+
+const LABS: LabResult[] = [
+  { id: "l1", testName: "Hemoglobin A1c", value: "7.2", unit: "%", refLow: 4.0, refHigh: 5.6, flag: "high", date: "2025-10-15", provider: "Dr. Aisha Patel", source: "extracted", sourceDocId: "d2", confidence: 0.94 },
+  { id: "l2", testName: "Hemoglobin A1c", value: "7.8", unit: "%", refLow: 4.0, refHigh: 5.6, flag: "high", date: "2025-04-10", provider: "Dr. Aisha Patel", source: "extracted", sourceDocId: "d2", confidence: 0.93 },
+  { id: "l3", testName: "LDL Cholesterol", value: "142", unit: "mg/dL", refLow: 0, refHigh: 100, flag: "high", date: "2025-10-15", provider: "Dr. Sarah Chen", source: "extracted", sourceDocId: "d2", confidence: 0.96 },
+  { id: "l4", testName: "Creatinine", value: "0.9", unit: "mg/dL", refLow: 0.6, refHigh: 1.2, flag: "normal", date: "2025-10-15", provider: "Dr. Sarah Chen", source: "extracted", sourceDocId: "d2", confidence: 0.98 },
+  { id: "l5", testName: "TSH", value: "2.1", unit: "mIU/L", refLow: 0.4, refHigh: 4.0, flag: "normal", date: "2025-10-15", provider: "Dr. Sarah Chen", source: "extracted", sourceDocId: "d2", confidence: 0.97 },
+  { id: "l6", testName: "Fasting Glucose", value: "138", unit: "mg/dL", refLow: 70, refHigh: 100, flag: "high", date: "2025-10-15", provider: "Dr. Sarah Chen", source: "extracted", sourceDocId: "d2", confidence: 0.95 },
+];
+
+const ENCS: Encounter[] = [
+  { id: "e1", date: "2025-10-28", type: "office_visit", complaint: "Annual physical", summary: "Routine exam. BP 134/86. Discussed statin adjustment for LDL.", provider: "Dr. Sarah Chen", facility: "Downtown Family Medicine", source: "extracted", sourceDocId: "d1" },
+  { id: "e2", date: "2025-10-20", type: "office_visit", complaint: "Diabetes follow-up", summary: "A1c improved 7.8→7.2. Continue metformin.", provider: "Dr. Aisha Patel", facility: "Mercy Endocrine Clinic", source: "extracted", sourceDocId: "d6" },
+  { id: "e3", date: "2025-09-15", type: "office_visit", complaint: "Cardiology consult", summary: "BP at target on lisinopril. Echo normal.", provider: "Dr. James Miller", facility: "Mercy Heart Center", source: "extracted", sourceDocId: "d3" },
+  { id: "e4", date: "2024-09-06", type: "imaging", complaint: "Lumbar MRI", summary: "Mild L4-L5 disc bulge, no stenosis.", provider: "Dr. Lisa Wong", facility: "Mercy General Radiology", source: "extracted", sourceDocId: "d4" },
+  { id: "e5", date: "2024-09-05", type: "er", complaint: "Severe back pain", summary: "Acute low back pain. No neuro deficits. Discharged with ibuprofen.", provider: "Dr. Robert Kim", facility: "Mercy General ER", source: "extracted", sourceDocId: "d5" },
+];
+
+const TL: TimelineEvent[] = [
+  { id: "t01", date: "2025-10-28", type: "encounter", title: "Annual Physical — Dr. Chen", description: "Routine exam. BP 134/86. Statin adjustment discussed.", importance: "routine", isMilestone: false, source: "extracted", sourceDocId: "d1", provider: "Dr. Sarah Chen", facility: "Downtown Family Medicine", bodySystem: "general" },
+  { id: "t02", date: "2025-10-20", type: "encounter", title: "Diabetes Follow-Up", description: "A1c improved 7.8→7.2%. Continue current regimen.", importance: "notable", isMilestone: false, source: "extracted", sourceDocId: "d6", provider: "Dr. Aisha Patel", facility: "Mercy Endocrine Clinic", bodySystem: "endocrine" },
+  { id: "t03", date: "2025-10-15", type: "lab_result", title: "A1c: 7.2% (Improving)", description: "Down from 7.8%. Still above target 4.0–5.6%.", importance: "notable", isMilestone: false, source: "extracted", sourceDocId: "d2", bodySystem: "endocrine", meta: { value: "7.2%", flag: "high" } },
+  { id: "t04", date: "2025-10-15", type: "lab_result", title: "LDL: 142 mg/dL (High)", description: "Above target <100. Statin adjustment discussed.", importance: "significant", isMilestone: false, source: "extracted", sourceDocId: "d2", bodySystem: "cardiovascular" },
+  { id: "t05", date: "2025-10-15", type: "lab_result", title: "Fasting Glucose: 138 mg/dL", description: "Elevated. Normal range 70–100.", importance: "notable", isMilestone: false, source: "extracted", sourceDocId: "d2", bodySystem: "endocrine" },
+  { id: "t06", date: "2025-09-15", type: "encounter", title: "Cardiology Consult", description: "BP management review. Echo normal. Continue lisinopril.", importance: "notable", isMilestone: false, source: "extracted", sourceDocId: "d3", provider: "Dr. James Miller", facility: "Mercy Heart Center", bodySystem: "cardiovascular" },
+  { id: "t07", date: "2025-04-10", type: "lab_result", title: "A1c: 7.8% (High)", description: "Above target. Led to treatment review.", importance: "significant", isMilestone: false, source: "extracted", sourceDocId: "d2", bodySystem: "endocrine" },
+  { id: "t08", date: "2024-09-06", type: "imaging", title: "Lumbar MRI — Mild Disc Bulge", description: "L4-L5 disc bulge, no stenosis.", importance: "notable", isMilestone: false, source: "extracted", sourceDocId: "d4", provider: "Dr. Lisa Wong", bodySystem: "musculoskeletal" },
+  { id: "t09", date: "2024-09-05", type: "er_visit", title: "ER Visit — Severe Back Pain", description: "Acute low back pain, unable to walk. Discharged with ibuprofen.", importance: "critical", isMilestone: true, source: "extracted", sourceDocId: "d5", provider: "Dr. Robert Kim", facility: "Mercy General ER", bodySystem: "musculoskeletal" },
+  { id: "t10", date: "2022-01-10", type: "medication_start", title: "Started Atorvastatin 20mg", description: "Statin initiated for hyperlipidemia.", importance: "notable", isMilestone: false, source: "manual", bodySystem: "cardiovascular", provider: "Dr. Sarah Chen" },
+  { id: "t11", date: "2022-01-05", type: "diagnosis", title: "Diagnosed: Hyperlipidemia", description: "E78.5 — Based on lipid panel.", importance: "significant", isMilestone: true, source: "extracted", sourceDocId: "d1", bodySystem: "cardiovascular", provider: "Dr. Sarah Chen" },
+  { id: "t12", date: "2021-06-15", type: "medication_start", title: "Started Metformin 500mg", description: "Initiated for Type 2 Diabetes.", importance: "notable", isMilestone: false, source: "extracted", bodySystem: "endocrine", provider: "Dr. Aisha Patel" },
+  { id: "t13", date: "2021-06-01", type: "diagnosis", title: "Diagnosed: Type 2 Diabetes", description: "E11.9 — Started on metformin.", importance: "critical", isMilestone: true, source: "extracted", bodySystem: "endocrine", provider: "Dr. Aisha Patel" },
+  { id: "t14", date: "2020-03-22", type: "medication_start", title: "Started Lisinopril 10mg", description: "ACE inhibitor for blood pressure.", importance: "notable", isMilestone: false, source: "extracted", bodySystem: "cardiovascular", provider: "Dr. James Miller" },
+  { id: "t15", date: "2020-03-15", type: "diagnosis", title: "Diagnosed: Hypertension", description: "I10 — Started on lisinopril.", importance: "significant", isMilestone: true, source: "extracted", bodySystem: "cardiovascular", provider: "Dr. James Miller" },
+];
+
+const DISCLAIMER = "Auto-generated from patient-uploaded records by VitaLink. Not medical advice. Verify with your clinician.";
+
+function fmtDate(d: string) {
+  return new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function makeSummary(s: Pick<Store, "conditions" | "meds" | "allergies" | "labs" | "encounters">): DoctorSummary {
+  return {
+    id: `s-${Date.now()}`, generatedAt: new Date().toISOString(),
+    visitProvider: "Dr. James Miller", visitSpecialty: "Cardiology",
+    visitReason: "Blood pressure management, elevated LDL follow-up",
+    conditions: s.conditions.filter((c) => c.status !== "resolved").map((c) => ({ name: c.name, onset: c.onsetDate, docId: c.sourceDocId })),
+    medications: s.meds.filter((m) => m.status === "active").map((m) => ({ name: m.name, dosage: m.dosage, freq: m.frequency, reason: m.reason, docId: m.sourceDocId })),
+    allergies: s.allergies.map((a) => ({ substance: a.substance, reaction: a.reaction, severity: a.severity })),
+    abnormalLabs: s.labs.filter((l) => l.flag !== "normal").slice(0, 5).map((l) => ({ test: l.testName, value: l.value, unit: l.unit, range: l.refLow != null && l.refHigh != null ? `${l.refLow}–${l.refHigh} ${l.unit}` : "", date: fmtDate(l.date), docId: l.sourceDocId })),
+    encounters: s.encounters.slice(0, 3).map((e) => ({ date: fmtDate(e.date), type: e.type === "office_visit" ? "Office Visit" : e.type, provider: e.provider, summary: e.summary, docId: e.sourceDocId })),
+    procedures: [{ name: "Lumbar MRI", date: "Sep 6, 2024", docId: "d4" }, { name: "Echocardiogram", date: "Sep 15, 2025", docId: "d3" }],
+    questions: ["Should I increase my statin dose for LDL?", "Is my blood pressure well-controlled?", "Do I need additional cardiac screening?"],
+    gaps: ["No diabetic eye exam documented", "No records from PCP prior to 2020", "Limited lipid trend data"],
+    disclaimer: DISCLAIMER,
+  };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  MOCK EXTRACTION
+// ════════════════════════════════════════════════════════════════
+
+const EXT: Record<string, { cls: string; ev: Omit<TimelineEvent, "id" | "sourceDocId"> }> = {
+  lab: { cls: "Lab Report", ev: { date: "", type: "lab_result", title: "Lab Results Received", description: "Lab panel processed.", importance: "routine", isMilestone: false, source: "extracted", bodySystem: "general" } },
+  rx: { cls: "Prescription", ev: { date: "", type: "medication_start", title: "New Prescription", description: "Medication prescribed.", importance: "notable", isMilestone: false, source: "extracted", bodySystem: "general" } },
+  img: { cls: "Imaging Report", ev: { date: "", type: "imaging", title: "Imaging Study", description: "Imaging report uploaded.", importance: "notable", isMilestone: false, source: "extracted", bodySystem: "general" } },
+  visit: { cls: "Progress Note", ev: { date: "", type: "encounter", title: "Office Visit Documented", description: "Visit note processed.", importance: "routine", isMilestone: false, source: "extracted", bodySystem: "general" } },
+  def: { cls: "Medical Document", ev: { date: "", type: "encounter", title: "Record Uploaded", description: "Document stored.", importance: "routine", isMilestone: false, source: "uploaded", bodySystem: "general" } },
+};
+
+function guessType(n: string): string {
+  const lo = n.toLowerCase();
+  if (/lab|blood|test|result|cbc|panel/.test(lo)) return "lab";
+  if (/rx|presc|med/.test(lo)) return "rx";
+  if (/mri|xray|ct|imag|radio|scan/.test(lo)) return "img";
+  if (/visit|note|consult|physical|follow/.test(lo)) return "visit";
+  return "def";
+}
+
+export async function mockExtract(doc: MedDocument): Promise<{ updated: MedDocument; events: TimelineEvent[] }> {
+  await new Promise((r) => setTimeout(r, 1200 + Math.random() * 800));
+  const today = new Date().toISOString().split("T")[0];
+  const k = guessType(doc.fileName);
+  const m = EXT[k] || EXT["def"];
+  return {
+    updated: { ...doc, classification: m.cls, extractionStatus: "completed", extractedDate: today, extractedProvider: "Provider (extracted)", extractedFacility: "Facility (extracted)" },
+    events: [{ ...m.ev, date: today, id: `tl-${Date.now()}`, sourceDocId: doc.id }],
+  };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  STORE
+// ════════════════════════════════════════════════════════════════
+
+interface Store {
+  patient: Patient;
+  docs: MedDocument[];
+  meds: Medication[];
+  conditions: Condition[];
+  allergies: Allergy[];
+  labs: LabResult[];
+  encounters: Encounter[];
+  timeline: TimelineEvent[];
+  summary: DoctorSummary | null;
+  filter: FilterCategory;
+  search: string;
+  loadDemo: () => void;
+  addDoc: (d: MedDocument) => void;
+  replaceDoc: (id: string, d: MedDocument) => void;
+  addEvents: (e: TimelineEvent[]) => void;
+  setFilter: (f: FilterCategory) => void;
+  setSearch: (s: string) => void;
+  genSummary: () => void;
+  filtered: () => TimelineEvent[];
+}
+
+const sortTL = (a: TimelineEvent[]) => [...a].sort((x, y) => new Date(y.date).getTime() - new Date(x.date).getTime());
+
+export const useStore = create<Store>((set, get) => ({
+  patient: PAT, docs: [], meds: [], conditions: [], allergies: [],
+  labs: [], encounters: [], timeline: [], summary: null,
+  filter: "all", search: "",
+
+  loadDemo: () => set({
+    patient: PAT, docs: DOCS, meds: MEDS, conditions: CONDS,
+    allergies: ALRG, labs: LABS, encounters: ENCS,
+    timeline: sortTL(TL), summary: makeSummary({ conditions: CONDS, meds: MEDS, allergies: ALRG, labs: LABS, encounters: ENCS }),
+  }),
+
+  addDoc: (d) => set((s) => ({ docs: [d, ...s.docs] })),
+  replaceDoc: (id, d) => set((s) => ({ docs: s.docs.map((x) => x.id === id ? d : x) })),
+  addEvents: (e) => set((s) => ({ timeline: sortTL([...e, ...s.timeline]) })),
+  setFilter: (f) => set({ filter: f }),
+  setSearch: (s) => set({ search: s }),
+
+  genSummary: () => { const s = get(); set({ summary: makeSummary(s) }); },
+
+  filtered: () => {
+    const { timeline, filter, search } = get();
+    let r = timeline;
+    if (filter !== "all") {
+      const map: Record<string, string[]> = {
+        visits: ["encounter", "er_visit"], diagnoses: ["diagnosis"],
+        medications: ["medication_start", "medication_stop"],
+        labs: ["lab_result"], procedures: ["procedure", "surgery"], imaging: ["imaging"],
+      };
+      r = r.filter((e) => (map[filter] || []).includes(e.type));
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      r = r.filter((e) => e.title.toLowerCase().includes(q) || (e.description || "").toLowerCase().includes(q) || (e.provider || "").toLowerCase().includes(q));
+    }
+    return r;
+  },
+}));
