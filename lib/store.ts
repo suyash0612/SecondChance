@@ -3,6 +3,7 @@ import type {
   Patient, MedDocument, Medication, Condition, Allergy,
   LabResult, Encounter, TimelineEvent, DoctorSummary, FilterCategory,
 } from "./types";
+export { extractDocument as mockExtract } from "./extract";
 
 // ════════════════════════════════════════════════════════════════
 //  SEED DATA
@@ -99,38 +100,6 @@ function makeSummary(s: Pick<Store, "conditions" | "meds" | "allergies" | "labs"
     questions: ["Should I increase my statin dose for LDL?", "Is my blood pressure well-controlled?", "Do I need additional cardiac screening?"],
     gaps: ["No diabetic eye exam documented", "No records from PCP prior to 2020", "Limited lipid trend data"],
     disclaimer: DISCLAIMER,
-  };
-}
-
-// ════════════════════════════════════════════════════════════════
-//  MOCK EXTRACTION
-// ════════════════════════════════════════════════════════════════
-
-const EXT: Record<string, { cls: string; ev: Omit<TimelineEvent, "id" | "sourceDocId"> }> = {
-  lab: { cls: "Lab Report", ev: { date: "", type: "lab_result", title: "Lab Results Received", description: "Lab panel processed.", importance: "routine", isMilestone: false, source: "extracted", bodySystem: "general" } },
-  rx: { cls: "Prescription", ev: { date: "", type: "medication_start", title: "New Prescription", description: "Medication prescribed.", importance: "notable", isMilestone: false, source: "extracted", bodySystem: "general" } },
-  img: { cls: "Imaging Report", ev: { date: "", type: "imaging", title: "Imaging Study", description: "Imaging report uploaded.", importance: "notable", isMilestone: false, source: "extracted", bodySystem: "general" } },
-  visit: { cls: "Progress Note", ev: { date: "", type: "encounter", title: "Office Visit Documented", description: "Visit note processed.", importance: "routine", isMilestone: false, source: "extracted", bodySystem: "general" } },
-  def: { cls: "Medical Document", ev: { date: "", type: "encounter", title: "Record Uploaded", description: "Document stored.", importance: "routine", isMilestone: false, source: "uploaded", bodySystem: "general" } },
-};
-
-function guessType(n: string): string {
-  const lo = n.toLowerCase();
-  if (/lab|blood|test|result|cbc|panel/.test(lo)) return "lab";
-  if (/rx|presc|med/.test(lo)) return "rx";
-  if (/mri|xray|ct|imag|radio|scan/.test(lo)) return "img";
-  if (/visit|note|consult|physical|follow/.test(lo)) return "visit";
-  return "def";
-}
-
-export async function mockExtract(doc: MedDocument): Promise<{ updated: MedDocument; events: TimelineEvent[] }> {
-  await new Promise((r) => setTimeout(r, 1200 + Math.random() * 800));
-  const today = new Date().toISOString().split("T")[0];
-  const k = guessType(doc.fileName);
-  const m = EXT[k] || EXT["def"];
-  return {
-    updated: { ...doc, classification: m.cls, extractionStatus: "completed", extractedDate: today, extractedProvider: "Provider (extracted)", extractedFacility: "Facility (extracted)" },
-    events: [{ ...m.ev, date: today, id: `tl-${Date.now()}`, sourceDocId: doc.id }],
   };
 }
 

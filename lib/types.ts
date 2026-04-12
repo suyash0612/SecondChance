@@ -28,6 +28,7 @@ export interface MedDocument {
   extractedDate?: string;
   extractedProvider?: string;
   extractedFacility?: string;
+  extractionPath?: "mock" | "ocr_stub";
 }
 
 export interface Medication {

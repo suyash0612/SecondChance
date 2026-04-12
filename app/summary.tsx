@@ -9,6 +9,7 @@ import { C, S, F, R, shadow } from "../lib/theme";
 export default function SummaryScreen() {
   const summary = useStore((s) => s.summary);
   const p = useStore((s) => s.patient);
+  const docs = useStore((s) => s.docs);
   const genSummary = useStore((s) => s.genSummary);
   const [mode, setMode] = useState<"clin" | "patient">("clin");
 
@@ -55,7 +56,8 @@ export default function SummaryScreen() {
             {summary.visitReason && <Text style={st.ctxM}>Reason: {summary.visitReason}</Text>}
           </View>
         )}
-        <Text style={st.gen}>Generated {genDate}</Text>
+        <View style={st.genRow}><Ionicons name="time-outline" size={13} color={C.t3} /><Text style={st.gen}>Last updated {genDate}</Text></View>
+        {docs.length > 0 && <View style={st.genRow}><Ionicons name="document-text-outline" size={13} color={C.t3} /><Text style={st.gen}>Based on {docs.length} document{docs.length !== 1 ? "s" : ""}</Text></View>}
       </Card>
 
       {/* Toggle */}
@@ -84,12 +86,12 @@ export default function SummaryScreen() {
         </Section>
 
         {summary.abnormalLabs.length > 0 && (
-          <Section title="Recent Abnormal Results" icon="flask-outline" color={C.labResult}>
+          <Section title={mode === "patient" ? "Results to Review" : "Recent Abnormal Results"} icon="flask-outline" color={C.labResult}>
             {summary.abnormalLabs.map((l, i) => <LabRow key={i} test={l.test} value={l.value} unit={l.unit} range={l.range} date={l.date} />)}
           </Section>
         )}
 
-        <Section title="Recent Encounters" icon="clipboard-outline" color={C.encounter}>
+        <Section title={mode === "patient" ? "Recent Visits" : "Recent Encounters"} icon="clipboard-outline" color={C.encounter}>
           {summary.encounters.map((e, i) => <EncRow key={i} date={e.date} type={e.type} provider={e.provider} summary={e.summary} />)}
         </Section>
 
@@ -105,12 +107,18 @@ export default function SummaryScreen() {
           {summary.questions.map((q, i) => <QRow key={i} q={q} i={i} />)}
         </Section>
 
-        {summary.gaps.length > 0 && (
-          <Section title="Gaps & Limitations" icon="warning-outline" color={C.warn}>
-            {summary.gaps.map((g, i) => <GapRow key={i} text={g} />)}
-          </Section>
-        )}
       </Card>
+
+      {summary.gaps.length > 0 && (
+        <Card style={st.gapsCard}>
+          <View style={st.gapsH}>
+            <Ionicons name="warning-outline" size={18} color={C.warn} />
+            <Text style={st.gapsT}>Care Gaps & Missing Data</Text>
+            <View style={st.gapsCt}><Text style={st.gapsCtT}>{summary.gaps.length}</Text></View>
+          </View>
+          {summary.gaps.map((g, i) => <GapRow key={i} text={g} />)}
+        </Card>
+      )}
 
       {/* Disclaimer */}
       <Card style={st.discCard}>
@@ -145,6 +153,12 @@ const st = StyleSheet.create({
   ctxT: { fontSize: F.sm, fontWeight: "700", color: C.priMut, marginBottom: 4 },
   ctxM: { fontSize: F.sm, color: C.priMut, lineHeight: 19 },
   gen: { fontSize: F.xs, color: C.t3 },
+  genRow: { flexDirection: "row", alignItems: "center", gap: S.xs, marginTop: 4 },
+  gapsCard: { backgroundColor: C.warnBg, borderColor: C.warn + "40", borderWidth: 1, marginBottom: S.lg, padding: S.lg },
+  gapsH: { flexDirection: "row", alignItems: "center", gap: S.sm, marginBottom: S.md },
+  gapsT: { fontSize: F.md, fontWeight: "700", color: C.warn, flex: 1 },
+  gapsCt: { width: 22, height: 22, borderRadius: 11, backgroundColor: C.warn + "20", alignItems: "center", justifyContent: "center" },
+  gapsCtT: { fontSize: F.xs, fontWeight: "700", color: C.warn },
   toggle: { flexDirection: "row", backgroundColor: C.bgAlt, borderRadius: R.md, padding: 3, marginBottom: S.lg, borderWidth: 1, borderColor: C.brd },
   togBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: S.sm, paddingVertical: S.sm + 2, borderRadius: R.sm },
   togAct: { backgroundColor: C.pri, ...shadow },

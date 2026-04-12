@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, type ViewStyle } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, type ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { C, S, F, R, shadow, sourceColor, sourceLabel } from "../lib/theme";
 
@@ -34,13 +34,13 @@ export function SourceBadge({ source }: { source: string }) {
 
 export function PillFilter({ options, selected, onSelect }: { options: { key: string; label: string }[]; selected: string; onSelect: (k: string) => void }) {
   return (
-    <View style={st.pillRow}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.pillRow}>
       {options.map((o) => (
         <TouchableOpacity key={o.key} onPress={() => onSelect(o.key)} style={[st.pill, selected === o.key && st.pillSel]}>
           <Text style={[st.pillT, selected === o.key && st.pillTSel]}>{o.label}</Text>
         </TouchableOpacity>
       ))}
-    </View>
+    </ScrollView>
   );
 }
 

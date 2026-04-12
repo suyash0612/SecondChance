@@ -5,7 +5,7 @@ import type { TimelineEvent } from "../lib/types";
 import { Card, Badge, SourceBadge } from "./UI";
 import { C, S, F, eventColor, eventLabel } from "../lib/theme";
 
-export function TimelineCard({ event, first, last }: { event: TimelineEvent; first?: boolean; last?: boolean }) {
+export function TimelineCard({ event, first, last, onPress }: { event: TimelineEvent; first?: boolean; last?: boolean; onPress?: () => void }) {
   const tc = eventColor(event.type);
   const d = new Date(event.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const ic = event.importance === "critical" ? C.err : event.importance === "significant" ? C.warn : undefined;
@@ -17,7 +17,7 @@ export function TimelineCard({ event, first, last }: { event: TimelineEvent; fir
         <View style={[s.dot, { backgroundColor: tc }]}>{event.isMilestone && <View style={s.pulse} />}</View>
         {!last && <View style={s.lineB} />}
       </View>
-      <Card style={[s.eCard, event.isMilestone && { borderColor: C.err + "30", borderWidth: 1.5 }]}>
+      <Card style={[s.eCard, event.isMilestone && { borderColor: C.err + "30", borderWidth: 1.5 }]} onPress={onPress}>
         <View style={s.tags}>
           <Badge label={eventLabel(event.type)} color={tc} small />
           {ic && <Badge label={event.importance === "critical" ? "Critical" : "Important"} color={ic} small />}

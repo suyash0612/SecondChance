@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet, TextInput } from "react-native";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../../lib/store";
 import type { FilterCategory } from "../../lib/types";
@@ -13,6 +14,7 @@ const OPTS: { key: FilterCategory; label: string }[] = [
 ];
 
 export default function Timeline() {
+  const router = useRouter();
   const filter = useStore((s) => s.filter);
   const search = useStore((s) => s.search);
   const setFilter = useStore((s) => s.setFilter);
@@ -40,7 +42,7 @@ export default function Timeline() {
           grouped.map(([year, evs]) => (
             <View key={year}>
               <View style={st.yH}><View style={st.yL} /><Text style={st.yT}>{year}</Text><View style={st.yL} /></View>
-              {evs.map((e, i) => <TimelineCard key={e.id} event={e} first={i === 0} last={i === evs.length - 1} />)}
+              {evs.map((e, i) => <TimelineCard key={e.id} event={e} first={i === 0} last={i === evs.length - 1} onPress={() => router.push(`/event/${e.id}` as any)} />)}
             </View>
           ))}
         <Disclaimer compact /><View style={{ height: 30 }} />
