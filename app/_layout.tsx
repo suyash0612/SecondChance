@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
-import { useColorScheme } from "react-native";
+import { useColorScheme, View } from "react-native";
 import { useStore } from "../lib/store";
 import { LIGHT_VALS, DARK_VALS, buildThemeCSS } from "../lib/theme";
+import ToastManager, { type ToastRef } from "../components/Toast";
+import { setGlobalToastRef } from "../lib/useToast";
 
 export default function RootLayout() {
   const authUser = useStore((s) => s.authUser);
@@ -12,6 +14,7 @@ export default function RootLayout() {
   const segments = useSegments();
   const system = useColorScheme();
   const styleTagRef = useRef<HTMLStyleElement | null>(null);
+  const toastRef = useRef<ToastRef>(null);
 
   // ── Inject CSS custom properties so every StyleSheet reacts to theme changes ──
   useEffect(() => {
@@ -31,6 +34,11 @@ export default function RootLayout() {
 
     // Also set color-scheme on root so browser chrome (scrollbars etc) matches
     document.documentElement.style.colorScheme = dark ? "dark" : "light";
+
+    // Setup global toast ref
+    if (toastRef.current) {
+      setGlobalToastRef(toastRef.current);
+    }
   }, [darkModePref, system]);
 
   // ── Auth guard ────────────────────────────────────────────────────────────────
@@ -57,19 +65,22 @@ export default function RootLayout() {
   }, [authUser, segments]);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="login" />
-      <Stack.Screen name="signup" />
-      <Stack.Screen name="onboarding" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="upload" options={{ presentation: "modal" }} />
-      <Stack.Screen name="summary" options={{ presentation: "modal" }} />
-      <Stack.Screen name="vitals" options={{ presentation: "modal" }} />
-      <Stack.Screen name="appointments" options={{ presentation: "modal" }} />
-      <Stack.Screen name="emergency" options={{ presentation: "modal" }} />
-      <Stack.Screen name="add-data" options={{ presentation: "modal" }} />
-      <Stack.Screen name="record/[id]" />
-      <Stack.Screen name="event/[id]" />
-    </Stack>
+    <View style={{ flex: 1 }}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="login" />
+        <Stack.Screen name="signup" />
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="upload" options={{ presentation: "modal" }} />
+        <Stack.Screen name="summary" options={{ presentation: "modal" }} />
+        <Stack.Screen name="vitals" options={{ presentation: "modal" }} />
+        <Stack.Screen name="appointments" options={{ presentation: "modal" }} />
+        <Stack.Screen name="emergency" options={{ presentation: "modal" }} />
+        <Stack.Screen name="add-data" options={{ presentation: "modal" }} />
+        <Stack.Screen name="record/[id]" />
+        <Stack.Screen name="event/[id]" />
+      </Stack>
+      <ToastManager ref={toastRef} />
+    </View>
   );
 }

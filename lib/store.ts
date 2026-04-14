@@ -175,6 +175,7 @@ interface Store {
   loadDemo: () => void;
   addDoc: (d: MedDocument) => void;
   replaceDoc: (id: string, d: MedDocument) => void;
+  deleteDoc: (id: string) => void;
   addEvents: (e: TimelineEvent[]) => void;
   addMeds: (m: Medication[]) => void;
   addConditions: (c: Condition[]) => void;
@@ -307,6 +308,10 @@ export const useStore = create<Store>()(
       }),
       replaceDoc: (id, d) => set((s) => {
         const docs = s.docs.map((x) => x.id === id ? d : x);
+        return { docs, accounts: syncAccount(s, { docs }) };
+      }),
+      deleteDoc: (id) => set((s) => {
+        const docs = s.docs.filter((d) => d.id !== id);
         return { docs, accounts: syncAccount(s, { docs }) };
       }),
       addEvents: (e) => set((s) => {

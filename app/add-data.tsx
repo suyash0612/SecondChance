@@ -13,7 +13,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../lib/store";
 import { Card, Badge } from "../components/UI";
-import { C, S, F, R, shadow } from "../lib/theme";
+import { C, S, F, R, shadow, colorOpacity } from "../lib/theme";
 import type { Medication, Condition, Allergy } from "../lib/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ const sb = StyleSheet.create({
     marginBottom: S.md,
     gap: S.sm,
     borderWidth: 1,
-    borderColor: C.ok + "30",
+    borderColor: C.ok,
   },
   text: { fontSize: F.md, color: C.ok, fontWeight: "600" },
 });

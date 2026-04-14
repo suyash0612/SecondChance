@@ -2,12 +2,12 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SourceBadge } from "./UI";
-import { C, S, F, R } from "../lib/theme";
+import { C, S, F, R, colorOpacity, colorWithOpacity } from "../lib/theme";
 
 export function Section({ title, icon, color, children }: { title: string; icon: string; color: string; children: React.ReactNode }) {
   return (
     <View style={s.sec}>
-      <View style={s.secH}><View style={[s.secI, { backgroundColor: color + "15" }]}><Ionicons name={icon as any} size={16} color={color} /></View><Text style={s.secT}>{title}</Text></View>
+      <View style={s.secH}><View style={[s.secI, { backgroundColor: colorWithOpacity(color, 8) }]}><Ionicons name={icon as any} size={16} color={color} /></View><Text style={s.secT}>{title}</Text></View>
       {children}
     </View>
   );
@@ -38,7 +38,7 @@ export function AllergyRow({ substance, reaction, severity }: { substance: strin
     <View style={s.ir}>
       <View style={[s.dot, { backgroundColor: C.err }]} />
       <View style={{ flex: 1 }}><Text style={s.it}>{substance}</Text><Text style={s.im}>{reaction}</Text></View>
-      <View style={[s.sev, { backgroundColor: sc + "18" }]}><Text style={[s.sevT, { color: sc }]}>{severity}</Text></View>
+      <View style={[s.sev, { backgroundColor: colorWithOpacity(sc, 9) }]}><Text style={[s.sevT, { color: sc }]}>{severity}</Text></View>
     </View>
   );
 }
@@ -48,7 +48,7 @@ export function LabRow({ test, value, unit, range, date }: { test: string; value
     <View style={s.ir}>
       <View style={[s.dot, { backgroundColor: C.labResult }]} />
       <View style={{ flex: 1 }}><Text style={s.it}>{test}: <Text style={{ fontWeight: "700", color: C.err }}>{value} {unit}</Text></Text><Text style={s.im}>Ref: {range} · {date}</Text></View>
-      <View style={[s.sev, { backgroundColor: C.err + "18" }]}><Text style={[s.sevT, { color: C.err }]}>Abnormal</Text></View>
+      <View style={[s.sev, { backgroundColor: colorOpacity('err', 9) }]}><Text style={[s.sevT, { color: C.err }]}>Abnormal</Text></View>
     </View>
   );
 }

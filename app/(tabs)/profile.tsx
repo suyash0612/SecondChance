@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../../lib/store";
 import { Card, SectionHeader, Disclaimer } from "../../components/UI";
-import { C, S, F, R, shadow } from "../../lib/theme";
+import { C, S, F, R, shadow, colorOpacity } from "../../lib/theme";
 import type { DarkModePref } from "../../lib/types";
 
 export default function Profile() {
@@ -33,6 +33,10 @@ export default function Profile() {
 
   return (
     <ScrollView style={st.wrap} contentContainerStyle={st.cnt}>
+      <TouchableOpacity style={st.backBtn} onPress={() => router.push("/(tabs)" as any)}>
+        <Ionicons name="arrow-back" size={20} color={C.pri} />
+        <Text style={st.backBtnT}>Home</Text>
+      </TouchableOpacity>
 
       {/* ── Patient card ─────────────────────────────────────────── */}
       <View style={st.profileCard}>
@@ -184,7 +188,7 @@ function SettingRow({ icon, label, value, onPress, danger }: {
 }) {
   return (
     <TouchableOpacity style={st.sRow} onPress={onPress} activeOpacity={0.7}>
-      <View style={[st.sIconWrap, { backgroundColor: (danger ? C.err : C.pri) + "12" }]}>
+      <View style={[st.sIconWrap, { backgroundColor: colorOpacity(danger ? 'err' : 'pri', 7) }]}>
         <Ionicons name={icon as any} size={18} color={danger ? C.err : C.pri} />
       </View>
       <Text style={[st.sL, danger && { color: C.err }]}>{label}</Text>
@@ -199,7 +203,7 @@ function ToggleRow({ icon, label, value, onToggle }: {
 }) {
   return (
     <View style={st.sRow}>
-      <View style={[st.sIconWrap, { backgroundColor: C.pri + "12" }]}>
+      <View style={[st.sIconWrap, { backgroundColor: colorOpacity('pri', 7) }]}>
         <Ionicons name={icon as any} size={18} color={C.pri} />
       </View>
       <Text style={st.sL}>{label}</Text>
@@ -223,7 +227,7 @@ function DarkModeRow() {
   ];
   return (
     <View style={st.sRow}>
-      <View style={[st.sIconWrap, { backgroundColor: C.pri + "12" }]}>
+      <View style={[st.sIconWrap, { backgroundColor: colorOpacity('pri', 7) }]}>
         <Ionicons name="moon-outline" size={18} color={C.pri} />
       </View>
       <Text style={st.sL}>Dark Mode</Text>
@@ -249,6 +253,8 @@ const ir = StyleSheet.create({
 const st = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: C.bg },
   cnt: { padding: S.lg, paddingTop: S.md },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: S.xs, marginBottom: S.lg },
+  backBtnT: { fontSize: F.md, color: C.pri, fontWeight: "500" },
 
   profileCard: {
     alignItems: "center", backgroundColor: C.card, borderRadius: R.xl,
@@ -298,12 +304,12 @@ const st = StyleSheet.create({
     flexDirection: "row", alignItems: "center", justifyContent: "center",
     gap: S.sm, paddingVertical: S.lg, marginTop: S.sm,
     backgroundColor: C.errBg, borderRadius: R.lg,
-    borderWidth: 1, borderColor: C.err + "30",
+    borderWidth: 1, borderColor: colorOpacity('err', 19),
   },
   signOutT: { fontSize: F.md, fontWeight: "600", color: C.err },
   logoutConfirm: {
     marginTop: S.sm, backgroundColor: C.errBg, borderRadius: R.lg,
-    borderWidth: 1, borderColor: C.err + "30", padding: S.lg, alignItems: "center", gap: S.md,
+    borderWidth: 1, borderColor: colorOpacity('err', 19), padding: S.lg, alignItems: "center", gap: S.md,
   },
   logoutConfirmT: { fontSize: F.md, color: C.t1, fontWeight: "500", textAlign: "center" },
   logoutBtns: { flexDirection: "row", gap: S.md, width: "100%" },

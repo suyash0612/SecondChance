@@ -14,9 +14,9 @@ from typing import Optional
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from claude_extract import extract_with_vision, extract_with_claude
-from models import ExtractionResponse
-from ocr import extract_text
+from .claude_extract import extract_with_vision, extract_with_claude
+from .models import ExtractionResponse
+from .ocr import extract_text
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(name)s | %(message)s")
 logger = logging.getLogger(__name__)

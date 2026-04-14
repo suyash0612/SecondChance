@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View, Text, ScrollView, StyleSheet, TextInput } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../../lib/store";
@@ -30,6 +30,10 @@ export default function Timeline() {
 
   return (
     <View style={st.wrap}>
+      <TouchableOpacity style={st.backBtn} onPress={() => router.push("/(tabs)" as any)}>
+        <Ionicons name="arrow-back" size={20} color={C.pri} />
+        <Text style={st.backBtnT}>Home</Text>
+      </TouchableOpacity>
       <View style={st.sW}><View style={st.sB}>
         <Ionicons name="search-outline" size={18} color={C.t3} />
         <TextInput style={st.sI} placeholder="Search timeline…" placeholderTextColor={C.t3} value={search} onChangeText={setSearch} />
@@ -53,6 +57,8 @@ export default function Timeline() {
 
 const st = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: C.bg },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.lg, paddingTop: S.md, paddingBottom: S.sm },
+  backBtnT: { fontSize: F.md, color: C.pri, fontWeight: "500" },
   sW: { paddingHorizontal: S.lg, paddingTop: S.md },
   sB: { flexDirection: "row", alignItems: "center", backgroundColor: C.card, borderRadius: R.md, paddingHorizontal: S.md, paddingVertical: S.sm, borderWidth: 1, borderColor: C.brd, gap: S.sm },
   sI: { flex: 1, fontSize: F.md, color: C.t1, paddingVertical: 4 },

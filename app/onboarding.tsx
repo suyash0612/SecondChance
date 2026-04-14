@@ -153,7 +153,7 @@ const st = StyleSheet.create({
     width: 260,
     height: 260,
     borderRadius: 130,
-    backgroundColor: C.pri + "12",
+    backgroundColor: C.priFaint,
   },
   dotsRow: {
     flexDirection: "row",

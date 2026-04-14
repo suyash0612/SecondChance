@@ -40,6 +40,12 @@ export default function EventDetail() {
 
   return (
     <ScrollView style={st.wrap} contentContainerStyle={st.cnt}>
+      {/* Back button */}
+      <TouchableOpacity style={st.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/timeline" as any)}>
+        <Ionicons name="arrow-back" size={22} color={C.t1} />
+        <Text style={st.backBtnT}>Timeline</Text>
+      </TouchableOpacity>
+
       {/* Header */}
       <Card style={st.header}>
         <View style={st.tags}>
@@ -91,6 +97,8 @@ export default function EventDetail() {
 const st = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: C.bg },
   cnt: { padding: S.lg },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: S.xs, marginBottom: S.lg },
+  backBtnT: { fontSize: F.md, color: C.pri, fontWeight: "500" },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: S.lg, backgroundColor: C.bg },
   emptyT: { fontSize: F.lg, color: C.t2 },
   backBtn: { paddingVertical: S.sm, paddingHorizontal: S.lg, backgroundColor: C.priFaint, borderRadius: R.md },

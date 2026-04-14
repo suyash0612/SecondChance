@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../../lib/store";
 import { Card, SectionHeader, Badge, Disclaimer } from "../../components/UI";
-import { C, S, F, R, shadow } from "../../lib/theme";
+import { C, S, F, R, shadow, colorOpacity } from "../../lib/theme";
 
 export default function VisitPrep() {
   const router = useRouter();
@@ -18,6 +18,10 @@ export default function VisitPrep() {
 
   return (
     <ScrollView style={st.wrap} contentContainerStyle={st.cnt}>
+      <TouchableOpacity style={st.backBtn} onPress={() => router.push("/(tabs)" as any)}>
+        <Ionicons name="arrow-back" size={20} color={C.pri} />
+        <Text style={st.backBtnT}>Home</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={st.hero} activeOpacity={0.85} onPress={() => router.push("/summary")}>
         <View style={st.heroI}><Ionicons name="document-text" size={32} color="#fff" /></View>
         <Text style={st.heroT}>Generate Doctor Summary</Text>
@@ -41,7 +45,7 @@ export default function VisitPrep() {
       ))}</Card>
 
       {abnL.length > 0 && (<><SectionHeader title="Recent Abnormal Results" sub={`${abnL.length} flagged`} />
-        <Card style={{ backgroundColor: C.warnBg, borderColor: C.warn + "25" }}>{abnL.slice(0, 4).map((l, i) => (
+        <Card style={{ backgroundColor: C.warnBg, borderColor: colorOpacity('warn', 15) }}>{abnL.slice(0, 4).map((l, i) => (
           <View key={l.id} style={[st.row, i === Math.min(abnL.length, 4) - 1 && st.last]}><View style={[st.dot, { backgroundColor: C.labResult }]} /><View style={{ flex: 1 }}><Text style={st.rowT}>{l.testName}</Text><Text style={st.rowM}>{new Date(l.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</Text></View><Text style={{ fontSize: F.md, fontWeight: "700", color: C.err }}>{l.value} {l.unit}</Text></View>
         ))}</Card></>)}
 
@@ -52,6 +56,8 @@ export default function VisitPrep() {
 
 const st = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: C.bg }, cnt: { padding: S.lg },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: S.xs, marginBottom: S.lg },
+  backBtnT: { fontSize: F.md, color: C.pri, fontWeight: "500" },
   hero: { backgroundColor: C.bgDark, borderRadius: R.xl, padding: S.xxl, alignItems: "center", marginBottom: S.xxl, ...shadow },
   heroI: { width: 64, height: 64, borderRadius: 32, backgroundColor: C.priLt, alignItems: "center", justifyContent: "center", marginBottom: S.lg },
   heroT: { fontSize: F.xl, fontWeight: "700", color: C.tInv, textAlign: "center" },

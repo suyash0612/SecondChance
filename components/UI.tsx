@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, type ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { C, S, F, R, shadow, sourceColor, sourceLabel } from "../lib/theme";
+import { C, S, F, R, shadow, sourceColor, sourceLabel, colorWithOpacity } from "../lib/theme";
 
 export function Card({ children, style, onPress }: { children: React.ReactNode; style?: ViewStyle; onPress?: () => void }) {
   const W = onPress ? TouchableOpacity : View;
@@ -22,8 +22,8 @@ export function SectionHeader({ title, sub, action, onAction }: { title: string;
 
 export function Badge({ label, color, small }: { label: string; color: string; small?: boolean }) {
   return (
-    <View style={[st.badge, { backgroundColor: color + "18" }, small && st.badgeSm]}>
-      <Text style={[st.badgeT, { color }, small && { fontSize: 9 }]}>{label}</Text>
+    <View style={[st.badge, { backgroundColor: colorWithOpacity(color, 18) }, small && st.badgeSm]}>
+      <Text style={[st.badgeT, { color: "#FFFFFF" }, small && { fontSize: 9 }]}>{label}</Text>
     </View>
   );
 }
@@ -72,7 +72,7 @@ export function Disclaimer({ compact }: { compact?: boolean }) {
 export function StatCard({ label, value, icon, color }: { label: string; value: string | number; icon: string; color: string }) {
   return (
     <View style={st.stat}>
-      <View style={[st.statI, { backgroundColor: color + "15" }]}><Ionicons name={icon as any} size={20} color={color} /></View>
+      <View style={[st.statI, { backgroundColor: colorWithOpacity(color, 8) }]}><Ionicons name={icon as any} size={20} color={color} /></View>
       <Text style={st.statV}>{value}</Text>
       <Text style={st.statL}>{label}</Text>
     </View>

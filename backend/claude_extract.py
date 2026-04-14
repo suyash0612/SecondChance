@@ -15,8 +15,12 @@ from typing import Any, Dict, List, Optional
 
 from google import genai
 from dotenv import load_dotenv
+import sys
+from pathlib import Path
 
-load_dotenv()
+# Load .env from backend directory
+backend_dir = Path(__file__).parent
+load_dotenv(backend_dir / '.env')
 
 logger = logging.getLogger(__name__)
 

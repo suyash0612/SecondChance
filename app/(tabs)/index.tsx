@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../../lib/store";
 import { Card, SectionHeader, StatCard, Disclaimer } from "../../components/UI";
 import { TimelineCard } from "../../components/TimelineCard";
-import { C, S, F, R, shadow } from "../../lib/theme";
+import { C, S, F, R, shadow, colorOpacity } from "../../lib/theme";
 
 export default function Home() {
   const router = useRouter();
@@ -74,7 +74,7 @@ export default function Home() {
       {/* Feature shortcuts */}
       <View style={st.shortcuts}>
         <TouchableOpacity style={st.shortcut} onPress={() => router.push("/vitals" as any)}>
-          <View style={[st.shortcutIcon, { backgroundColor: C.encounter + "18" }]}>
+          <View style={[st.shortcutIcon, { backgroundColor: colorOpacity('encounter', 9) }]}>
             <Ionicons name="pulse-outline" size={22} color={C.encounter} />
           </View>
           <Text style={st.shortcutL}>Vitals</Text>
@@ -86,13 +86,13 @@ export default function Home() {
           <Text style={st.shortcutL}>Appointments</Text>
         </TouchableOpacity>
         <TouchableOpacity style={st.shortcut} onPress={() => router.push("/add-data" as any)}>
-          <View style={[st.shortcutIcon, { backgroundColor: C.medication + "18" }]}>
+          <View style={[st.shortcutIcon, { backgroundColor: colorOpacity('medication', 9) }]}>
             <Ionicons name="add-circle-outline" size={22} color={C.medication} />
           </View>
           <Text style={st.shortcutL}>Add Data</Text>
         </TouchableOpacity>
         <TouchableOpacity style={st.shortcut} onPress={() => router.push("/emergency" as any)}>
-          <View style={[st.shortcutIcon, { backgroundColor: C.err + "18" }]}>
+          <View style={[st.shortcutIcon, { backgroundColor: colorOpacity('err', 9) }]}>
             <Ionicons name="shield-outline" size={22} color={C.err} />
           </View>
           <Text style={st.shortcutL}>Emergency</Text>
@@ -164,7 +164,7 @@ const st = StyleSheet.create({
   ctaS: { fontSize: F.sm, color: C.priMut, marginTop: 2 },
   stats: { flexDirection: "row", gap: S.sm, marginBottom: S.xl },
   acts: { flexDirection: "row", gap: S.sm, marginBottom: S.lg },
-  actBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: S.sm, paddingVertical: S.md, backgroundColor: C.priFaint, borderRadius: R.md, borderWidth: 1, borderColor: C.priMut + "50" },
+  actBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: S.sm, paddingVertical: S.md, backgroundColor: C.priFaint, borderRadius: R.md, borderWidth: 1, borderColor: C.priMut },
   actL: { fontSize: F.sm, fontWeight: "600", color: C.pri },
   shortcuts: { flexDirection: "row", gap: S.sm, marginBottom: S.xl },
   shortcut: { flex: 1, alignItems: "center", gap: S.xs },
@@ -175,7 +175,7 @@ const st = StyleSheet.create({
   apptLabel: { fontSize: F.xs, color: C.t3, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 },
   apptDoc: { fontSize: F.md, fontWeight: "600", color: C.t1, marginTop: 2 },
   apptDate: { fontSize: F.sm, color: C.pri, marginTop: 1 },
-  alert: { backgroundColor: C.warnBg, borderColor: C.warn + "30", marginBottom: S.xl },
+  alert: { backgroundColor: C.warnBg, borderColor: C.warn, marginBottom: S.xl },
   alertH: { flexDirection: "row", alignItems: "center", gap: S.sm, marginBottom: S.sm },
   alertT: { fontSize: F.md, fontWeight: "600", color: C.warn },
   alertR: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 4 },

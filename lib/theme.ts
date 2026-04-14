@@ -32,6 +32,16 @@ export const DARK_VALS = {
 // C uses CSS custom properties (with light-mode fallbacks).
 // On web, injecting :root { --so-bg: ...; } updates ALL StyleSheets instantly.
 // On native the fallback value is used directly.
+// Color opacity helper - returns rgba(r, g, b, alpha)
+// Usage: colorOpacity('err', 25) => "rgba(192, 57, 43, 0.25)"
+export function colorOpacity(colorName: keyof typeof LIGHT_VALS, percentOpacity: number): string {
+  const hex = LIGHT_VALS[colorName];
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const alpha = Math.max(0, Math.min(100, percentOpacity)) / 100;
+  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+}
+
 export const C = {
   pri:      "var(--so-pri, #0D5E56)",
   priLt:    "var(--so-priLt, #1A8A7D)",
@@ -85,6 +95,29 @@ export const shadow = {
   shadowRadius: 4,
   elevation: 2,
 } as const;
+
+// Utility: Convert hex color to RGB tuple for rgba calculations
+function hexToRgb(hex: string): [number, number, number] | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : null;
+}
+
+// Utility: Create rgba color with opacity (0-100)
+export function withOpacity(colorKey: keyof typeof LIGHT_VALS, opacityPercent: number): string {
+  const hex = LIGHT_VALS[colorKey];
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex; // Fallback to original if parsing fails
+  const alpha = Math.max(0, Math.min(100, opacityPercent)) / 100;
+  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+}
+
+// Utility: Create rgba color with opacity (0-100) from hex string
+export function colorWithOpacity(hex: string, opacityPercent: number): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const alpha = Math.max(0, Math.min(100, opacityPercent)) / 100;
+  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+}
 
 // Build a CSS string of :root overrides for the given palette
 export function buildThemeCSS(vals: Record<string, string>): string {

@@ -51,7 +51,7 @@ export interface MedDocument {
   extractedDate?: string;
   extractedProvider?: string;
   extractedFacility?: string;
-  extractionPath?: "mock" | "ocr_stub";
+  extractionPath?: "mock" | "ocr_stub" | "ai_extracted";
   fileUri?: string; // blob URL for in-app viewer
 }
 

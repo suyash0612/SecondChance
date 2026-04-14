@@ -5,7 +5,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../lib/store";
 import { extractDocument } from "../lib/extract";
 import { Card, Btn, Disclaimer } from "../components/UI";
-import { C, S, F, R, shadow } from "../lib/theme";
+import { C, S, F, R, shadow, colorOpacity } from "../lib/theme";
+import { useToast } from "../lib/useToast";
 import type { MedDocument } from "../lib/types";
 
 const STEPS = ["Reading document…", "Extracting structured data…", "Updating records & timeline…"];
@@ -23,7 +24,7 @@ const DEMOS = [
 type SuccessState = { docId: string; name: string; classification: string; eventCount: number; extractionPath: "mock" | "ocr_stub" | "ai_extracted" };
 
 export default function Upload() {
-  const router = useRouter();
+  const toast = useToast();  const router = useRouter();
   const addDoc = useStore((s) => s.addDoc);
   const replaceDoc = useStore((s) => s.replaceDoc);
   const addEvents = useStore((s) => s.addEvents);
@@ -72,7 +73,8 @@ export default function Upload() {
       if (encounters?.length) addEncounters(encounters);
       setBusy(false);
       setSuccess({ docId: doc.id, name, classification: updated.classification, eventCount: events.length, extractionPath });
-    } catch {
+      toast.success("Document processed successfully!");    } catch (error) {
+      toast.error("Failed to process document. Please try again.");
       clearTimeout(stepTimer1);
       clearTimeout(stepTimer2);
       setBusy(false);
@@ -114,6 +116,9 @@ export default function Upload() {
 
   return (
     <ScrollView style={st.wrap} contentContainerStyle={st.cnt}>
+      <TouchableOpacity style={st.backBtn} onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <Ionicons name="arrow-back" size={22} color={C.t1} />
+      </TouchableOpacity>
       <Text style={st.h}>Add a Medical Record</Text>
       <Text style={st.sub}>Upload any document — Second Opinion extracts structured data and adds it to your records and timeline automatically.</Text>
 
@@ -173,12 +178,12 @@ export default function Upload() {
       {/* Upload methods */}
       <View style={st.methods}>
         <TouchableOpacity style={[st.method, busy && st.methodDim]} activeOpacity={0.8} onPress={pickFile} disabled={busy}>
-          <View style={[st.mI, { backgroundColor: C.pri + "15" }]}><Ionicons name="document-outline" size={28} color={C.pri} /></View>
+          <View style={[st.mI, { backgroundColor: C.priFaint }]}><Ionicons name="document-outline" size={28} color={C.pri} /></View>
           <Text style={st.mT}>Choose File</Text>
           <Text style={st.mS}>PDF or image</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[st.method, busy && st.methodDim]} activeOpacity={0.8} onPress={() => process(`camera_scan_${Date.now()}.jpg`)} disabled={busy}>
-          <View style={[st.mI, { backgroundColor: C.imaging + "15" }]}><Ionicons name="camera-outline" size={28} color={C.imaging} /></View>
+          <View style={[st.mI, { backgroundColor: colorOpacity('imaging', 8) }]}><Ionicons name="camera-outline" size={28} color={C.imaging} /></View>
           <Text style={st.mT}>Scan Document</Text>
           <Text style={st.mS}>Take a photo</Text>
         </TouchableOpacity>
@@ -211,6 +216,7 @@ export default function Upload() {
 const st = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: C.bg },
   cnt: { padding: S.xl },
+  backBtn: { marginBottom: S.lg, width: 36, height: 36, alignItems: "center", justifyContent: "center" },
   h: { fontSize: F.xxl, fontWeight: "700", color: C.t1, letterSpacing: -0.5, marginBottom: S.sm },
   sub: { fontSize: F.md, color: C.t2, lineHeight: 22, marginBottom: S.xxl },
 
@@ -221,9 +227,9 @@ const st = StyleSheet.create({
   stepRow: { flexDirection: "row", gap: S.sm },
   stepDot: { flex: 1, height: 3, borderRadius: 2 },
 
-  success: { backgroundColor: C.okBg, borderColor: C.ok + "40", borderWidth: 1, marginBottom: S.xl, padding: S.lg },
+  success: { backgroundColor: C.okBg, borderColor: C.ok, borderWidth: 1, marginBottom: S.xl, padding: S.lg },
   successTop: { flexDirection: "row", alignItems: "flex-start", gap: S.md, marginBottom: S.sm },
-  successIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.ok + "15", alignItems: "center", justifyContent: "center" },
+  successIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.okBg, alignItems: "center", justifyContent: "center" },
   successT: { fontSize: F.md, fontWeight: "700", color: C.ok },
   successS: { fontSize: F.sm, color: C.t2, marginTop: 2 },
   provenanceRow: { flexDirection: "row", alignItems: "flex-start", gap: S.xs, marginBottom: S.md },
@@ -244,7 +250,7 @@ const st = StyleSheet.create({
   dN: { fontSize: F.sm, fontWeight: "600", color: C.t1 },
   dSubRow: { flexDirection: "row", alignItems: "center", gap: S.xs, marginTop: 2 },
   dSub: { fontSize: F.xs, color: C.t3 },
-  ocrBadge: { backgroundColor: C.pri + "15", borderRadius: R.pill, paddingHorizontal: 5, paddingVertical: 1 },
+  ocrBadge: { backgroundColor: C.priFaint, borderRadius: R.pill, paddingHorizontal: 5, paddingVertical: 1 },
   ocrBadgeT: { fontSize: 9, fontWeight: "700", color: C.pri, letterSpacing: 0.4 },
   pathRow: { flexDirection: "row", alignItems: "center", gap: S.xs, marginTop: S.xs },
   pathT: { fontSize: F.xs, color: C.t3 },

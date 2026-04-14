@@ -13,7 +13,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../lib/store";
 import { Card, Badge } from "../components/UI";
-import { C, S, F, R, shadow } from "../lib/theme";
+import { C, S, F, R, shadow, colorOpacity } from "../lib/theme";
 
 function calcAge(dob: string): number {
   const birth = new Date(dob + "T12:00:00");
@@ -146,7 +146,7 @@ export default function Emergency() {
         showsVerticalScrollIndicator={false}
       >
         {/* Critical Info */}
-        <View style={[st.criticalCard, { backgroundColor: C.errBg, borderColor: C.err + "30" }]}>
+        <View style={[st.criticalCard, { backgroundColor: C.errBg, borderColor: colorOpacity('err', 19) }]}>
           <View style={st.criticalHeader}>
             <Ionicons name="person-circle" size={20} color={C.err} />
             <Text style={[st.criticalTitle, { color: C.err }]}>Critical Patient Info</Text>
@@ -162,7 +162,7 @@ export default function Emergency() {
             </Text>
           ) : null}
           <View style={st.bloodTypeRow}>
-            <View style={[st.bloodTypeBadge, { backgroundColor: C.err + "18", borderColor: C.err + "40" }]}>
+            <View style={[st.bloodTypeBadge, { backgroundColor: colorOpacity('err', 9), borderColor: colorOpacity('err', 25) }]}>
               <Ionicons name="water" size={14} color={C.err} style={{ marginRight: 4 }} />
               <Text style={[st.bloodTypeText, { color: C.err }]}>
                 Blood Type: {patient.bloodType ?? "Unknown"}
@@ -172,7 +172,7 @@ export default function Emergency() {
         </View>
 
         {/* Allergies */}
-        <View style={[st.sectionCard, { backgroundColor: C.warnBg, borderColor: C.warn + "30" }]}>
+        <View style={[st.sectionCard, { backgroundColor: C.warnBg, borderColor: colorOpacity('warn', 19) }]}>
           <View style={st.sectionHeaderRow}>
             <Text style={[st.sectionTitle, { color: C.warn }]}>⚠ Allergies</Text>
           </View>

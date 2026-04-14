@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Share } from "react-native";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../lib/store";
 import { Card, Btn, Disclaimer } from "../components/UI";
 import { Section, CondRow, MedRow, AllergyRow, LabRow, EncRow, QRow, GapRow } from "../components/SummaryParts";
-import { C, S, F, R, shadow } from "../lib/theme";
+import { C, S, F, R, shadow, colorOpacity } from "../lib/theme";
 
 export default function SummaryScreen() {
+  const router = useRouter();
   const summary = useStore((s) => s.summary);
   const p = useStore((s) => s.patient);
   const docs = useStore((s) => s.docs);
@@ -46,6 +48,11 @@ export default function SummaryScreen() {
 
   return (
     <ScrollView style={st.wrap} contentContainerStyle={st.cnt}>
+      {/* Back button */}
+      <TouchableOpacity style={st.backBtn} onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <Ionicons name="arrow-back" size={22} color={C.t1} />
+      </TouchableOpacity>
+
       {/* Header */}
       <Card style={st.header}>
         <View style={st.hTop}>
@@ -150,6 +157,7 @@ export default function SummaryScreen() {
 
 const st = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: C.bg }, cnt: { padding: S.lg },
+  backBtn: { marginBottom: S.lg, width: 36, height: 36, alignItems: "center", justifyContent: "center" },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, gap: S.lg, backgroundColor: C.bg },
   emptyT: { fontSize: F.xl, fontWeight: "700", color: C.t1 },
   emptyM: { fontSize: F.md, color: C.t3, textAlign: "center", lineHeight: 22 },
@@ -157,17 +165,17 @@ const st = StyleSheet.create({
   hTop: { flexDirection: "row", alignItems: "flex-start", marginBottom: S.md },
   hName: { fontSize: F.xxl, fontWeight: "700", color: C.tInv, letterSpacing: -0.5 },
   hMeta: { fontSize: F.sm, color: C.priMut, marginTop: 2 },
-  aiBadge: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: C.generated + "20", paddingHorizontal: S.sm, paddingVertical: 3, borderRadius: R.pill },
+  aiBadge: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colorOpacity('generated', 13), paddingHorizontal: S.sm, paddingVertical: 3, borderRadius: R.pill },
   aiBadgeT: { fontSize: F.xs, fontWeight: "600", color: C.generated },
-  ctx: { backgroundColor: C.priLt + "20", borderRadius: R.md, padding: S.md, marginBottom: S.md },
+  ctx: { backgroundColor: colorOpacity('priLt', 13), borderRadius: R.md, padding: S.md, marginBottom: S.md },
   ctxT: { fontSize: F.sm, fontWeight: "700", color: C.priMut, marginBottom: 4 },
   ctxM: { fontSize: F.sm, color: C.priMut, lineHeight: 19 },
   gen: { fontSize: F.xs, color: C.t3 },
   genRow: { flexDirection: "row", alignItems: "center", gap: S.xs, marginTop: 4 },
-  gapsCard: { backgroundColor: C.warnBg, borderColor: C.warn + "40", borderWidth: 1, marginBottom: S.lg, padding: S.lg },
+  gapsCard: { backgroundColor: C.warnBg, borderColor: colorOpacity('warn', 25), borderWidth: 1, marginBottom: S.lg, padding: S.lg },
   gapsH: { flexDirection: "row", alignItems: "center", gap: S.sm, marginBottom: S.md },
   gapsT: { fontSize: F.md, fontWeight: "700", color: C.warn, flex: 1 },
-  gapsCt: { width: 22, height: 22, borderRadius: 11, backgroundColor: C.warn + "20", alignItems: "center", justifyContent: "center" },
+  gapsCt: { width: 22, height: 22, borderRadius: 11, backgroundColor: colorOpacity('warn', 13), alignItems: "center", justifyContent: "center" },
   gapsCtT: { fontSize: F.xs, fontWeight: "700", color: C.warn },
   toggle: { flexDirection: "row", backgroundColor: C.bgAlt, borderRadius: R.md, padding: 3, marginBottom: S.lg, borderWidth: 1, borderColor: C.brd },
   togBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: S.sm, paddingVertical: S.sm + 2, borderRadius: R.sm },
@@ -178,7 +186,7 @@ const st = StyleSheet.create({
   procRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: S.sm, borderBottomWidth: 1, borderBottomColor: C.brdLt },
   procN: { fontSize: F.md, fontWeight: "500", color: C.t1 },
   procD: { fontSize: F.sm, color: C.t3 },
-  discCard: { flexDirection: "row", alignItems: "flex-start", gap: S.md, backgroundColor: C.infoBg, borderColor: C.info + "25", marginBottom: S.xl },
+  discCard: { flexDirection: "row", alignItems: "flex-start", gap: S.md, backgroundColor: C.infoBg, borderColor: C.info, marginBottom: S.xl },
   discText: { flex: 1, fontSize: F.sm, color: C.info, lineHeight: 19 },
   acts: { flexDirection: "row", gap: S.md, marginBottom: S.md },
 });
