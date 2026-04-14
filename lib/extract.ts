@@ -116,16 +116,24 @@ async function extractFromBackend(
   try {
     const form = new FormData();
 
-    if (fileAsset?.uri) {
-      // React Native / Expo — pass the file asset directly
+    if (!fileAsset?.uri) return null;
+
+    const isWeb = typeof document !== "undefined"; // true in browser, false in RN
+    if (isWeb) {
+      // Browser: fetch the blob from the file URI, then append as a real File object
+      const blobRes = await fetch(fileAsset.uri);
+      const blob = await blobRes.blob();
+      const file = new File([blob], fileAsset.name || doc.fileName, {
+        type: fileAsset.mimeType || doc.mimeType || "application/octet-stream",
+      });
+      form.append("file", file);
+    } else {
+      // React Native — pass the asset descriptor directly (RN FormData handles it)
       form.append("file", {
         uri: fileAsset.uri,
         name: fileAsset.name || doc.fileName,
         type: fileAsset.mimeType || doc.mimeType,
       } as any);
-    } else {
-      // Web — nothing real to send; skip backend
-      return null;
     }
 
     form.append("doc_id", doc.id);
