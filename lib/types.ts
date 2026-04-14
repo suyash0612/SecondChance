@@ -15,11 +15,16 @@ export interface Account {
   labs: LabResult[];
   encounters: Encounter[];
   timeline: TimelineEvent[];
+  vitals: Vital[];
+  appointments: Appointment[];
+  hasSeenOnboarding?: boolean;
 }
 export type ExtractionStatus = "pending" | "processing" | "completed" | "failed";
 export type Importance = "routine" | "notable" | "significant" | "critical";
 export type AbnormalFlag = "normal" | "low" | "high" | "critical_low" | "critical_high";
 export type FilterCategory = "all" | "visits" | "diagnoses" | "medications" | "labs" | "procedures" | "imaging";
+export type VitalType = "bp" | "hr" | "weight" | "glucose" | "temp" | "spo2";
+export type DarkModePref = "system" | "light" | "dark";
 
 export interface Patient {
   id: string;
@@ -29,6 +34,7 @@ export interface Patient {
   sex: string;
   phone: string;
   email: string;
+  bloodType?: string;
   emergencyContact?: { name: string; phone: string; relationship: string };
   insurance?: string;
   memberId?: string;
@@ -46,6 +52,7 @@ export interface MedDocument {
   extractedProvider?: string;
   extractedFacility?: string;
   extractionPath?: "mock" | "ocr_stub";
+  fileUri?: string; // blob URL for in-app viewer
 }
 
 export interface Medication {
@@ -61,6 +68,7 @@ export interface Medication {
   source: Source;
   sourceDocId?: string;
   confidence: number;
+  reminderTime?: string; // "08:00" format
 }
 
 export interface Condition {
@@ -126,6 +134,29 @@ export interface TimelineEvent {
   facility?: string;
   bodySystem?: string;
   meta?: Record<string, string>;
+}
+
+export interface Vital {
+  id: string;
+  type: VitalType;
+  value: string;
+  value2?: string; // diastolic for BP
+  unit: string;
+  date: string;
+  time?: string;
+  note?: string;
+}
+
+export interface Appointment {
+  id: string;
+  date: string;
+  time?: string;
+  provider: string;
+  specialty?: string;
+  facility?: string;
+  reason: string;
+  status: "upcoming" | "completed" | "cancelled";
+  notes?: string;
 }
 
 export interface DoctorSummary {

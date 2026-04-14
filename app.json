@@ -6,7 +6,16 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "secondopinion",
-    "web": { "bundler": "metro", "output": "single" },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png",
+      "name": "Second Opinion",
+      "shortName": "2nd Opinion",
+      "description": "Your personal health records, organized and ready",
+      "themeColor": "#0D5E56",
+      "backgroundColor": "#FAFAF7"
+    },
     "plugins": ["expo-router"],
     "experiments": { "baseUrl": "/SecondChance" },
     "ios": { "supportsTablet": true },

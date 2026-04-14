@@ -88,6 +88,27 @@ export default function RecordDetail() {
         <Row label="Extraction" value={hasExtracted ? "Completed" : doc.extractionStatus} />
       </Card>
 
+      {/* Document Preview */}
+      {doc.fileUri && (
+        <Card style={st.section}>
+          <Text style={st.secTitle}>Document Preview</Text>
+          {typeof window !== "undefined" ? (
+            <View style={st.pdfWrap}>
+              <iframe
+                src={doc.fileUri}
+                style={{ width: "100%", height: 500, border: "none", borderRadius: 8 } as any}
+                title="Document Preview"
+              />
+            </View>
+          ) : (
+            <View style={st.pdfFallback}>
+              <Ionicons name="document-outline" size={32} color={C.t3} />
+              <Text style={st.pdfFallbackT}>Preview available on web</Text>
+            </View>
+          )}
+        </Card>
+      )}
+
       {/* Extracted Conditions */}
       {conditions.length > 0 && (
         <Card style={st.section}>
@@ -226,4 +247,7 @@ const st = StyleSheet.create({
   confT: { fontSize: 10, fontWeight: "600" },
   prov: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: S.xs, marginTop: S.md },
   provT: { fontSize: F.xs, color: C.t3 },
+  pdfWrap: { borderRadius: 8, overflow: "hidden", marginTop: S.sm },
+  pdfFallback: { alignItems: "center", padding: S.xl, gap: S.sm },
+  pdfFallbackT: { fontSize: F.sm, color: C.t3 },
 });

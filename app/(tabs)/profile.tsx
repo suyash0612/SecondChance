@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../../lib/store";
 import { Card, SectionHeader, Disclaimer } from "../../components/UI";
 import { C, S, F, R, shadow } from "../../lib/theme";
+import type { DarkModePref } from "../../lib/types";
 
 export default function Profile() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function Profile() {
 
   const [notifOn, setNotifOn] = useState(true);
   const [bioOn, setBioOn] = useState(false);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
 
   const dob = p.dateOfBirth ? new Date(p.dateOfBirth + "T12:00:00") : null;
   const age = dob ? Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
@@ -27,16 +29,7 @@ export default function Profile() {
 
   const tap = (l: string) => Alert.alert(l, "This setting is available in the full version of Second Opinion.");
 
-  const handleLogout = () => {
-    Alert.alert(
-      "Sign Out",
-      "Are you sure you want to sign out?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Sign Out", style: "destructive", onPress: logout },
-      ],
-    );
-  };
+  const handleLogout = () => setConfirmingLogout(true);
 
   return (
     <ScrollView style={st.wrap} contentContainerStyle={st.cnt}>
@@ -89,6 +82,18 @@ export default function Profile() {
         </>
       )}
 
+      {/* ── Health Tools ────────────────────────────────────────────── */}
+      <SectionHeader title="Health Tools" />
+      <Card style={st.settingsCard}>
+        <SettingRow icon="pulse-outline" label="Vitals Tracker" value="BP, glucose, HR" onPress={() => router.push("/vitals" as any)} />
+        <View style={st.rowDiv} />
+        <SettingRow icon="calendar-outline" label="Appointments" value={`${docs.length > 0 ? "View all" : "None"}`} onPress={() => router.push("/appointments" as any)} />
+        <View style={st.rowDiv} />
+        <SettingRow icon="add-circle-outline" label="Add Health Data" value="Meds, conditions, allergies" onPress={() => router.push("/add-data" as any)} />
+        <View style={st.rowDiv} />
+        <SettingRow icon="shield-outline" label="Emergency Card" value="Critical info" onPress={() => router.push("/emergency" as any)} />
+      </Card>
+
       {/* ── Settings ─────────────────────────────────────────────── */}
       <SectionHeader title="Settings" />
       <Card style={st.settingsCard}>
@@ -97,10 +102,7 @@ export default function Profile() {
           value={notifOn} onToggle={setNotifOn}
         />
         <View style={st.rowDiv} />
-        <ToggleRow
-          icon="finger-print-outline" label="Biometric Lock"
-          value={bioOn} onToggle={setBioOn}
-        />
+        <DarkModeRow />
         <View style={st.rowDiv} />
         <SettingRow icon="cloud-download-outline" label="Offline Data" value={`${docs.length} cached`} onPress={() => tap("Offline Data")} />
         <View style={st.rowDiv} />
@@ -132,10 +134,24 @@ export default function Profile() {
       </Card>
 
       {/* ── Sign Out ─────────────────────────────────────────────── */}
-      <TouchableOpacity style={st.signOutBtn} onPress={handleLogout} activeOpacity={0.85}>
-        <Ionicons name="log-out-outline" size={20} color={C.err} />
-        <Text style={st.signOutT}>Sign Out</Text>
-      </TouchableOpacity>
+      {confirmingLogout ? (
+        <View style={st.logoutConfirm}>
+          <Text style={st.logoutConfirmT}>Are you sure you want to sign out?</Text>
+          <View style={st.logoutBtns}>
+            <TouchableOpacity style={st.cancelBtn} onPress={() => setConfirmingLogout(false)}>
+              <Text style={st.cancelBtnT}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={st.confirmBtn} onPress={logout}>
+              <Text style={st.confirmBtnT}>Yes, Sign Out</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : (
+        <TouchableOpacity style={st.signOutBtn} onPress={handleLogout} activeOpacity={0.85}>
+          <Ionicons name="log-out-outline" size={20} color={C.err} />
+          <Text style={st.signOutT}>Sign Out</Text>
+        </TouchableOpacity>
+      )}
 
       <View style={{ height: 40 }} />
     </ScrollView>
@@ -193,6 +209,33 @@ function ToggleRow({ icon, label, value, onToggle }: {
         trackColor={{ false: C.brd, true: C.priMut }}
         thumbColor={value ? C.pri : C.t3}
       />
+    </View>
+  );
+}
+
+function DarkModeRow() {
+  const pref = useStore((s) => s.darkMode);
+  const setDarkMode = useStore((s) => s.setDarkMode);
+  const opts: { key: DarkModePref; label: string }[] = [
+    { key: "system", label: "Auto" },
+    { key: "light", label: "Light" },
+    { key: "dark", label: "Dark" },
+  ];
+  return (
+    <View style={st.sRow}>
+      <View style={[st.sIconWrap, { backgroundColor: C.pri + "12" }]}>
+        <Ionicons name="moon-outline" size={18} color={C.pri} />
+      </View>
+      <Text style={st.sL}>Dark Mode</Text>
+      <View style={{ flexDirection: "row", gap: 4 }}>
+        {opts.map(o => (
+          <TouchableOpacity key={o.key} onPress={() => setDarkMode(o.key)}
+            style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
+              backgroundColor: pref === o.key ? C.pri : C.priFaint }}>
+            <Text style={{ fontSize: 12, color: pref === o.key ? "#fff" : C.t2, fontWeight: "600" }}>{o.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
   );
 }
@@ -258,4 +301,21 @@ const st = StyleSheet.create({
     borderWidth: 1, borderColor: C.err + "30",
   },
   signOutT: { fontSize: F.md, fontWeight: "600", color: C.err },
+  logoutConfirm: {
+    marginTop: S.sm, backgroundColor: C.errBg, borderRadius: R.lg,
+    borderWidth: 1, borderColor: C.err + "30", padding: S.lg, alignItems: "center", gap: S.md,
+  },
+  logoutConfirmT: { fontSize: F.md, color: C.t1, fontWeight: "500", textAlign: "center" },
+  logoutBtns: { flexDirection: "row", gap: S.md, width: "100%" },
+  cancelBtn: {
+    flex: 1, paddingVertical: S.md, borderRadius: R.md,
+    backgroundColor: C.card, borderWidth: 1, borderColor: C.brd,
+    alignItems: "center",
+  },
+  cancelBtnT: { fontSize: F.md, fontWeight: "600", color: C.t2 },
+  confirmBtn: {
+    flex: 1, paddingVertical: S.md, borderRadius: R.md,
+    backgroundColor: C.err, alignItems: "center",
+  },
+  confirmBtnT: { fontSize: F.md, fontWeight: "600", color: "#fff" },
 });

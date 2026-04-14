@@ -28,14 +28,20 @@ export default function SummaryScreen() {
 
   const doShare = async () => {
     const lines = [
-      "VITALINK VISIT SUMMARY", `Patient: ${p.firstName} ${p.lastName}`, "",
+      "SECOND OPINION VISIT SUMMARY", `Patient: ${p.firstName} ${p.lastName}`, "",
       "ALLERGIES:", ...summary.allergies.map((a) => `⚠ ${a.substance} — ${a.reaction} (${a.severity})`), "",
       "CONDITIONS:", ...summary.conditions.map((c) => `• ${c.name}${c.onset ? ` (since ${c.onset})` : ""}`), "",
       "MEDICATIONS:", ...summary.medications.map((m) => `• ${m.name} ${m.dosage} — ${m.freq}`), "",
       "ABNORMAL LABS:", ...summary.abnormalLabs.map((l) => `• ${l.test}: ${l.value} ${l.unit} (ref: ${l.range})`), "",
       "---", summary.disclaimer,
     ];
-    try { await Share.share({ title: "VitaLink Summary", message: lines.join("\n") }); } catch {}
+    try { await Share.share({ title: "Second Opinion Summary", message: lines.join("\n") }); } catch {}
+  };
+
+  const doPrint = () => {
+    if (typeof window !== "undefined" && window.print) {
+      window.print();
+    }
   };
 
   return (
@@ -129,7 +135,11 @@ export default function SummaryScreen() {
       {/* Actions */}
       <View style={st.acts}>
         <Btn title="Share with Doctor" onPress={doShare} icon="share-outline" variant="primary" style={{ flex: 1 }} />
-        <Btn title="Export PDF" onPress={() => Alert.alert("Export", "In the full app this generates a PDF, shareable link, and QR code.")} icon="download-outline" variant="outline" style={{ flex: 1 }} />
+        <Btn title="Export PDF" onPress={() => {
+          if (typeof window !== "undefined" && window.print) {
+            window.print();
+          }
+        }} icon="download-outline" variant="outline" style={{ flex: 1 }} />
       </View>
       <Btn title="Regenerate Summary" onPress={() => { genSummary(); Alert.alert("Updated", "Summary regenerated."); }} icon="refresh-outline" variant="secondary" style={{ marginBottom: S.xl }} />
 

@@ -44,9 +44,11 @@ export default function Upload() {
     fileAsset?: { uri: string; name: string; mimeType: string },
   ) => {
     setSuccess(null);
+    const fileUri = fileAsset?.uri;
     const doc: MedDocument = {
       id: `doc-${Date.now()}`, fileName: name, mimeType: fileAsset?.mimeType ?? "application/pdf",
       uploadedAt: new Date().toISOString(), classification: "Pending…", extractionStatus: "processing",
+      ...(fileUri ? { fileUri } : {}),
     };
     addDoc(doc);
     setBusy(true);
