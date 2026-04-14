@@ -33,12 +33,7 @@ export default function Profile() {
       "Are you sure you want to sign out?",
       [
         { text: "Cancel", style: "cancel" },
-        {
-          text: "Sign Out", style: "destructive", onPress: () => {
-            logout();
-            router.replace("/login");
-          },
-        },
+        { text: "Sign Out", style: "destructive", onPress: logout },
       ],
     );
   };

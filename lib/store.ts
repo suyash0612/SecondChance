@@ -162,6 +162,15 @@ interface Store {
   filtered: () => TimelineEvent[];
 }
 
+// Merges a partial data update into the active account entry so that
+// logout → login restores all uploads and extracted data.
+function syncAccount(s: { authUser: AuthUser | null; accounts: Account[] }, patch: Partial<Account>): Account[] {
+  if (!s.authUser) return s.accounts;
+  return s.accounts.map((acc) =>
+    acc.email === s.authUser!.email ? { ...acc, ...patch } : acc,
+  );
+}
+
 const EMPTY_PATIENT: Patient = {
   id: "", firstName: "", lastName: "", dateOfBirth: "", sex: "", phone: "", email: "",
 };
@@ -237,14 +246,40 @@ export const useStore = create<Store>((set, get) => ({
     timeline: sortTL(TL), summary: makeSummary({ conditions: CONDS, meds: MEDS, allergies: ALRG, labs: LABS, encounters: ENCS }),
   }),
 
-  addDoc: (d) => set((s) => ({ docs: [d, ...s.docs] })),
-  replaceDoc: (id, d) => set((s) => ({ docs: s.docs.map((x) => x.id === id ? d : x) })),
-  addEvents: (e) => set((s) => ({ timeline: sortTL([...e, ...s.timeline]) })),
-  addMeds: (m) => set((s) => ({ meds: [...m, ...s.meds] })),
-  addConditions: (c) => set((s) => ({ conditions: [...c, ...s.conditions] })),
-  addAllergies: (a) => set((s) => ({ allergies: [...a, ...s.allergies] })),
-  addLabs: (l) => set((s) => ({ labs: [...l, ...s.labs] })),
-  addEncounters: (e) => set((s) => ({ encounters: [...e, ...s.encounters] })),
+  // Helper used inside actions to sync the active account's data
+  // so that logout → login restores everything the user uploaded.
+  addDoc: (d) => set((s) => {
+    const docs = [d, ...s.docs];
+    return { docs, accounts: syncAccount(s, { docs }) };
+  }),
+  replaceDoc: (id, d) => set((s) => {
+    const docs = s.docs.map((x) => x.id === id ? d : x);
+    return { docs, accounts: syncAccount(s, { docs }) };
+  }),
+  addEvents: (e) => set((s) => {
+    const timeline = sortTL([...e, ...s.timeline]);
+    return { timeline, accounts: syncAccount(s, { timeline }) };
+  }),
+  addMeds: (m) => set((s) => {
+    const meds = [...m, ...s.meds];
+    return { meds, accounts: syncAccount(s, { meds }) };
+  }),
+  addConditions: (c) => set((s) => {
+    const conditions = [...c, ...s.conditions];
+    return { conditions, accounts: syncAccount(s, { conditions }) };
+  }),
+  addAllergies: (a) => set((s) => {
+    const allergies = [...a, ...s.allergies];
+    return { allergies, accounts: syncAccount(s, { allergies }) };
+  }),
+  addLabs: (l) => set((s) => {
+    const labs = [...l, ...s.labs];
+    return { labs, accounts: syncAccount(s, { labs }) };
+  }),
+  addEncounters: (e) => set((s) => {
+    const encounters = [...e, ...s.encounters];
+    return { encounters, accounts: syncAccount(s, { encounters }) };
+  }),
   setFilter: (f) => set({ filter: f }),
   setSearch: (s) => set({ search: s }),
 

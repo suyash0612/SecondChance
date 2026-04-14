@@ -10,6 +10,7 @@ import { C, S, F, R, shadow } from "../../lib/theme";
 export default function Home() {
   const router = useRouter();
   const p = useStore((s) => s.patient);
+  const authUser = useStore((s) => s.authUser);
   const docs = useStore((s) => s.docs);
   const meds = useStore((s) => s.meds);
   const conditions = useStore((s) => s.conditions);
@@ -62,7 +63,9 @@ export default function Home() {
       {recent.map((e, i) => <TimelineCard key={e.id} event={e} first={i === 0} last={i === recent.length - 1} />)}
 
       <Disclaimer />
-      <View style={st.demo}><Ionicons name="flask-outline" size={12} color={C.t3} /><Text style={st.demoT}>Demo Mode — Sample patient data</Text></View>
+      {authUser?.email === "maria.santos@email.com" && (
+        <View style={st.demo}><Ionicons name="flask-outline" size={12} color={C.t3} /><Text style={st.demoT}>Demo account — Sample patient data</Text></View>
+      )}
       <View style={{ height: 20 }} />
     </ScrollView>
   );

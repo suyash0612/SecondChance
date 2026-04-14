@@ -50,8 +50,17 @@ export default function RecordDetail() {
   const uploadDate = new Date(doc.uploadedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const hasExtracted = doc.extractionStatus === "completed";
 
+  const noExtractedData = conditions.length === 0 && meds.length === 0 && labs.length === 0 && encounters.length === 0;
+  const isMock = doc.extractedProvider === "Provider (extracted)" || doc.extractedProvider === "Unknown Provider";
+
   return (
     <ScrollView style={st.wrap} contentContainerStyle={st.cnt}>
+      {/* Back button */}
+      <TouchableOpacity style={st.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/records" as any)}>
+        <Ionicons name="arrow-back" size={22} color={C.t1} />
+        <Text style={st.backBtnT}>Records</Text>
+      </TouchableOpacity>
+
       {/* Header */}
       <Card style={st.header}>
         <View style={st.hRow}>
@@ -156,11 +165,28 @@ export default function RecordDetail() {
         </Card>
       )}
 
+      {/* Empty extraction state */}
+      {hasExtracted && noExtractedData && (
+        <Card style={st.noDataCard}>
+          <View style={st.noDataRow}>
+            <Ionicons name={isMock ? "cloud-offline-outline" : "information-circle-outline"} size={20} color={C.warn} />
+            <View style={{ flex: 1 }}>
+              <Text style={st.noDataT}>{isMock ? "Backend not reached — limited extraction" : "No structured data found"}</Text>
+              <Text style={st.noDataS}>
+                {isMock
+                  ? "Start the Python backend (port 8000) and re-upload for AI-powered extraction of conditions, medications, and labs."
+                  : "This document did not contain recognisable clinical entities."}
+              </Text>
+            </View>
+          </View>
+        </Card>
+      )}
+
       {/* Provenance footer */}
       <View style={st.prov}>
         <Ionicons name="shield-checkmark-outline" size={13} color={C.t3} />
         <Text style={st.provT}>
-          Source: {sourceLabel(doc.extractionStatus === "completed" ? "extracted" : "uploaded")} · VitaLink prototype
+          Source: {sourceLabel(doc.extractionStatus === "completed" ? "extracted" : "uploaded")} · Second Opinion
         </Text>
       </View>
 
@@ -172,6 +198,12 @@ export default function RecordDetail() {
 const st = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: C.bg },
   cnt: { padding: S.lg },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: S.xs, marginBottom: S.lg },
+  backBtnT: { fontSize: F.md, color: C.pri, fontWeight: "500" },
+  noDataCard: { backgroundColor: C.warnBg, borderColor: C.warn + "40", borderWidth: 1, marginBottom: S.md, padding: S.lg },
+  noDataRow: { flexDirection: "row", alignItems: "flex-start", gap: S.md },
+  noDataT: { fontSize: F.sm, fontWeight: "600", color: C.warn, marginBottom: 4 },
+  noDataS: { fontSize: F.xs, color: C.warn, lineHeight: 18, opacity: 0.85 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: S.lg, backgroundColor: C.bg },
   emptyT: { fontSize: F.lg, color: C.t2 },
   back: { paddingVertical: S.sm, paddingHorizontal: S.lg, backgroundColor: C.priFaint, borderRadius: R.md },
