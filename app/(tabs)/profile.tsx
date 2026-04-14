@@ -1,76 +1,266 @@
-import React from "react";
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import React, { useState } from "react";
+import {
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, Switch,
+} from "react-native";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../../lib/store";
 import { Card, SectionHeader, Disclaimer } from "../../components/UI";
-import { C, S, F, R } from "../../lib/theme";
+import { C, S, F, R, shadow } from "../../lib/theme";
 
 export default function Profile() {
+  const router = useRouter();
   const p = useStore((s) => s.patient);
+  const authUser = useStore((s) => s.authUser);
   const docs = useStore((s) => s.docs);
+  const meds = useStore((s) => s.meds);
+  const conditions = useStore((s) => s.conditions);
   const timeline = useStore((s) => s.timeline);
-  const dob = new Date(p.dateOfBirth + "T12:00:00");
-  const age = Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-  const tap = (l: string) => Alert.alert(l, "Available in the full version of VitaLink.");
-  const sets = [{ i: "notifications-outline", l: "Notifications", v: "On" }, { i: "finger-print-outline", l: "Biometric Lock", v: "Enabled" }, { i: "cloud-download-outline", l: "Offline Data", v: `${docs.length} cached` }, { i: "language-outline", l: "Language", v: "English" }];
-  const priv = [{ i: "shield-checkmark-outline", l: "Data Encryption", v: "AES-256" }, { i: "eye-off-outline", l: "AI Processing", v: "Consented" }, { i: "share-outline", l: "Active Shares", v: "0" }, { i: "document-lock-outline", l: "Audit Log", v: `${timeline.length + 10} events` }, { i: "trash-outline", l: "Delete All Data", v: "", d: true }];
+  const logout = useStore((s) => s.logout);
+
+  const [notifOn, setNotifOn] = useState(true);
+  const [bioOn, setBioOn] = useState(false);
+
+  const dob = p.dateOfBirth ? new Date(p.dateOfBirth + "T12:00:00") : null;
+  const age = dob ? Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
+  const initials = (p.firstName?.[0] ?? "") + (p.lastName?.[0] ?? "");
+
+  const tap = (l: string) => Alert.alert(l, "This setting is available in the full version of Second Opinion.");
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Sign Out",
+      "Are you sure you want to sign out?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Sign Out", style: "destructive", onPress: () => {
+            logout();
+            router.replace("/login");
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <ScrollView style={st.wrap} contentContainerStyle={st.cnt}>
-      <Card style={{ marginBottom: S.xl }}>
-        <View style={st.avRow}>
-          <View style={st.av}><Text style={st.avT}>{p.firstName[0]}{p.lastName[0]}</Text></View>
-          <View style={{ flex: 1 }}><Text style={st.name}>{p.firstName} {p.lastName}</Text><Text style={st.meta}>{p.sex} · Age {age} · DOB {dob.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</Text></View>
+
+      {/* ── Patient card ─────────────────────────────────────────── */}
+      <View style={st.profileCard}>
+        <View style={st.avatarWrap}>
+          <View style={st.avatar}>
+            <Text style={st.avatarT}>{initials || "?"}</Text>
+          </View>
+          <TouchableOpacity style={st.editBadge} onPress={() => tap("Edit Profile Photo")}>
+            <Ionicons name="camera" size={12} color="#fff" />
+          </TouchableOpacity>
         </View>
-        <IR i="call-outline" l="Phone" v={p.phone} /><IR i="mail-outline" l="Email" v={p.email} />
-        {p.insurance && <IR i="card-outline" l="Insurance" v={p.insurance} />}
-        {p.emergencyContact && <IR i="alert-circle-outline" l="Emergency" v={`${p.emergencyContact.name} (${p.emergencyContact.relationship})`} />}
-      </Card>
 
+        <Text style={st.name}>{p.firstName} {p.lastName}</Text>
+        {authUser && <Text style={st.emailBadge}>{authUser.email}</Text>}
+        {age !== null && dob && (
+          <Text style={st.meta}>
+            {p.sex} · Age {age} · DOB {dob.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+          </Text>
+        )}
+
+        {/* Stats row */}
+        <View style={st.statsRow}>
+          <Stat value={docs.length} label="Records" />
+          <View style={st.statDiv} />
+          <Stat value={meds.filter((m) => m.status === "active").length} label="Active Meds" />
+          <View style={st.statDiv} />
+          <Stat value={conditions.filter((c) => c.status !== "resolved").length} label="Conditions" />
+          <View style={st.statDiv} />
+          <Stat value={timeline.length} label="Events" />
+        </View>
+      </View>
+
+      {/* ── Contact info ─────────────────────────────────────────── */}
+      {(p.phone || p.email || p.insurance || p.emergencyContact) && (
+        <>
+          <SectionHeader title="Contact & Coverage" />
+          <Card>
+            {p.phone ? <IR i="call-outline" l="Phone" v={p.phone} /> : null}
+            {p.email ? <IR i="mail-outline" l="Email" v={p.email} /> : null}
+            {p.insurance ? <IR i="card-outline" l="Insurance" v={p.insurance} /> : null}
+            {p.memberId ? <IR i="barcode-outline" l="Member ID" v={p.memberId} /> : null}
+            {p.emergencyContact ? (
+              <IR i="alert-circle-outline" l="Emergency"
+                v={`${p.emergencyContact.name} (${p.emergencyContact.relationship})`} />
+            ) : null}
+          </Card>
+        </>
+      )}
+
+      {/* ── Settings ─────────────────────────────────────────────── */}
       <SectionHeader title="Settings" />
-      <Card>{sets.map((x, i) => <Row key={x.l} x={x} last={i === sets.length - 1} tap={tap} />)}</Card>
-
-      <SectionHeader title="Privacy & Security" />
-      <Card>{priv.map((x, i) => <Row key={x.l} x={x} last={i === priv.length - 1} tap={tap} />)}</Card>
-
-      <SectionHeader title="About VitaLink" />
-      <Card>
-        <Text style={st.about}>VitaLink helps you organize your medical history and prepare for doctor visits.</Text>
-        <View style={{ height: S.md }} /><Disclaimer /><View style={{ height: S.md }} />
-        <Text style={st.ver}>Version 1.0.0 (Demo) · © 2026 VitaLink Health</Text>
+      <Card style={st.settingsCard}>
+        <ToggleRow
+          icon="notifications-outline" label="Notifications"
+          value={notifOn} onToggle={setNotifOn}
+        />
+        <View style={st.rowDiv} />
+        <ToggleRow
+          icon="finger-print-outline" label="Biometric Lock"
+          value={bioOn} onToggle={setBioOn}
+        />
+        <View style={st.rowDiv} />
+        <SettingRow icon="cloud-download-outline" label="Offline Data" value={`${docs.length} cached`} onPress={() => tap("Offline Data")} />
+        <View style={st.rowDiv} />
+        <SettingRow icon="language-outline" label="Language" value="English" onPress={() => tap("Language")} />
       </Card>
-      <View style={st.demo}><Ionicons name="flask-outline" size={12} color={C.t3} /><Text style={st.demoT}>Demo Mode — No real data stored</Text></View>
-      <View style={{ height: 30 }} />
+
+      {/* ── Privacy & Security ────────────────────────────────────── */}
+      <SectionHeader title="Privacy & Security" />
+      <Card style={st.settingsCard}>
+        <SettingRow icon="shield-checkmark-outline" label="Data Encryption" value="AES-256" onPress={() => tap("Data Encryption")} />
+        <View style={st.rowDiv} />
+        <SettingRow icon="eye-off-outline" label="AI Processing" value="Consented" onPress={() => tap("AI Processing")} />
+        <View style={st.rowDiv} />
+        <SettingRow icon="share-outline" label="Active Shares" value="0" onPress={() => tap("Active Shares")} />
+        <View style={st.rowDiv} />
+        <SettingRow icon="document-lock-outline" label="Audit Log" value={`${timeline.length + 10} events`} onPress={() => tap("Audit Log")} />
+        <View style={st.rowDiv} />
+        <SettingRow icon="trash-outline" label="Delete All Data" value="" onPress={() => tap("Delete All Data")} danger />
+      </Card>
+
+      {/* ── About ─────────────────────────────────────────────────── */}
+      <SectionHeader title="About Second Opinion" />
+      <Card>
+        <Text style={st.about}>Second Opinion helps you organize your medical history, understand your records, and prepare for doctor visits — all on your device.</Text>
+        <View style={{ height: S.md }} />
+        <Disclaimer />
+        <View style={{ height: S.md }} />
+        <Text style={st.ver}>Version 1.0.0 · © 2026 Second Opinion Health</Text>
+      </Card>
+
+      {/* ── Sign Out ─────────────────────────────────────────────── */}
+      <TouchableOpacity style={st.signOutBtn} onPress={handleLogout} activeOpacity={0.85}>
+        <Ionicons name="log-out-outline" size={20} color={C.err} />
+        <Text style={st.signOutT}>Sign Out</Text>
+      </TouchableOpacity>
+
+      <View style={{ height: 40 }} />
     </ScrollView>
   );
 }
 
-function IR({ i, l, v }: { i: string; l: string; v: string }) {
-  return (<View style={ir.r}><Ionicons name={i as any} size={16} color={C.t3} /><Text style={ir.l}>{l}</Text><Text style={ir.v} numberOfLines={1}>{v}</Text></View>);
-}
-const ir = StyleSheet.create({ r: { flexDirection: "row", alignItems: "center", gap: S.sm, paddingVertical: 5 }, l: { fontSize: F.sm, color: C.t3, width: 72 }, v: { flex: 1, fontSize: F.sm, fontWeight: "500", color: C.t1 } });
+// ── Sub-components ────────────────────────────────────────────────────────────
 
-function Row({ x, last, tap }: { x: any; last: boolean; tap: (l: string) => void }) {
+function Stat({ value, label }: { value: number; label: string }) {
   return (
-    <TouchableOpacity style={[st.sRow, last && { borderBottomWidth: 0 }]} onPress={() => tap(x.l)}>
-      <Ionicons name={x.i} size={20} color={x.d ? C.err : C.t2} /><Text style={[st.sL, x.d && { color: C.err }]}>{x.l}</Text>
-      {x.v ? <Text style={st.sV}>{x.v}</Text> : null}<Ionicons name="chevron-forward" size={16} color={C.t3} />
+    <View style={st.stat}>
+      <Text style={st.statV}>{value}</Text>
+      <Text style={st.statL}>{label}</Text>
+    </View>
+  );
+}
+
+function IR({ i, l, v }: { i: string; l: string; v: string }) {
+  return (
+    <View style={ir.r}>
+      <Ionicons name={i as any} size={16} color={C.t3} />
+      <Text style={ir.l}>{l}</Text>
+      <Text style={ir.v} numberOfLines={1}>{v}</Text>
+    </View>
+  );
+}
+
+function SettingRow({ icon, label, value, onPress, danger }: {
+  icon: string; label: string; value: string; onPress: () => void; danger?: boolean;
+}) {
+  return (
+    <TouchableOpacity style={st.sRow} onPress={onPress} activeOpacity={0.7}>
+      <View style={[st.sIconWrap, { backgroundColor: (danger ? C.err : C.pri) + "12" }]}>
+        <Ionicons name={icon as any} size={18} color={danger ? C.err : C.pri} />
+      </View>
+      <Text style={[st.sL, danger && { color: C.err }]}>{label}</Text>
+      {value ? <Text style={st.sV}>{value}</Text> : null}
+      <Ionicons name="chevron-forward" size={16} color={C.t3} />
     </TouchableOpacity>
   );
 }
 
+function ToggleRow({ icon, label, value, onToggle }: {
+  icon: string; label: string; value: boolean; onToggle: (v: boolean) => void;
+}) {
+  return (
+    <View style={st.sRow}>
+      <View style={[st.sIconWrap, { backgroundColor: C.pri + "12" }]}>
+        <Ionicons name={icon as any} size={18} color={C.pri} />
+      </View>
+      <Text style={st.sL}>{label}</Text>
+      <Switch
+        value={value}
+        onValueChange={onToggle}
+        trackColor={{ false: C.brd, true: C.priMut }}
+        thumbColor={value ? C.pri : C.t3}
+      />
+    </View>
+  );
+}
+
+const ir = StyleSheet.create({
+  r: { flexDirection: "row", alignItems: "center", gap: S.sm, paddingVertical: 6 },
+  l: { fontSize: F.sm, color: C.t3, width: 76 },
+  v: { flex: 1, fontSize: F.sm, fontWeight: "500", color: C.t1 },
+});
+
 const st = StyleSheet.create({
-  wrap: { flex: 1, backgroundColor: C.bg }, cnt: { padding: S.lg },
-  avRow: { flexDirection: "row", alignItems: "center", gap: S.lg, marginBottom: S.lg, paddingBottom: S.lg, borderBottomWidth: 1, borderBottomColor: C.brdLt },
-  av: { width: 56, height: 56, borderRadius: 28, backgroundColor: C.pri, alignItems: "center", justifyContent: "center" },
-  avT: { fontSize: F.xl, fontWeight: "700", color: "#fff" },
-  name: { fontSize: F.xl, fontWeight: "700", color: C.t1 },
-  meta: { fontSize: F.sm, color: C.t3, marginTop: 2 },
-  sRow: { flexDirection: "row", alignItems: "center", gap: S.md, paddingVertical: S.md, borderBottomWidth: 1, borderBottomColor: C.brdLt },
-  sL: { flex: 1, fontSize: F.md, color: C.t1 },
-  sV: { fontSize: F.sm, color: C.t3 },
-  about: { fontSize: F.sm, color: C.t2, lineHeight: 20 },
+  wrap: { flex: 1, backgroundColor: C.bg },
+  cnt: { padding: S.lg, paddingTop: S.md },
+
+  profileCard: {
+    alignItems: "center", backgroundColor: C.card, borderRadius: R.xl,
+    padding: S.xl, marginBottom: S.xl, borderWidth: 1, borderColor: C.brdLt, ...shadow,
+  },
+  avatarWrap: { position: "relative", marginBottom: S.lg },
+  avatar: {
+    width: 80, height: 80, borderRadius: 40, backgroundColor: C.pri,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 3, borderColor: C.priFaint,
+  },
+  avatarT: { fontSize: 28, fontWeight: "800", color: "#fff" },
+  editBadge: {
+    position: "absolute", bottom: 0, right: 0,
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: C.priLt, alignItems: "center", justifyContent: "center",
+    borderWidth: 2, borderColor: C.card,
+  },
+  name: { fontSize: F.xl, fontWeight: "700", color: C.t1, textAlign: "center" },
+  emailBadge: { fontSize: F.sm, color: C.t3, marginTop: 4, marginBottom: 4 },
+  meta: { fontSize: F.sm, color: C.t3, textAlign: "center", marginBottom: S.lg },
+
+  statsRow: {
+    flexDirection: "row", alignItems: "center",
+    marginTop: S.md, paddingTop: S.lg,
+    borderTopWidth: 1, borderTopColor: C.brdLt, width: "100%",
+  },
+  stat: { flex: 1, alignItems: "center" },
+  statV: { fontSize: F.xl, fontWeight: "700", color: C.pri },
+  statL: { fontSize: F.xs, color: C.t3, marginTop: 2, textAlign: "center" },
+  statDiv: { width: 1, height: 32, backgroundColor: C.brdLt },
+
+  settingsCard: { padding: 0, overflow: "hidden" },
+  sRow: {
+    flexDirection: "row", alignItems: "center", gap: S.md,
+    paddingVertical: S.md, paddingHorizontal: S.lg,
+  },
+  sIconWrap: { width: 34, height: 34, borderRadius: R.md, alignItems: "center", justifyContent: "center" },
+  sL: { flex: 1, fontSize: F.md, color: C.t1, fontWeight: "500" },
+  sV: { fontSize: F.sm, color: C.t3, marginRight: S.xs },
+  rowDiv: { height: 1, backgroundColor: C.brdLt, marginLeft: S.lg + 34 + S.md },
+
+  about: { fontSize: F.sm, color: C.t2, lineHeight: 21 },
   ver: { fontSize: F.xs, color: C.t3, textAlign: "center" },
-  demo: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: S.xs, paddingVertical: S.lg },
-  demoT: { fontSize: F.xs, color: C.t3 },
+
+  signOutBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: S.sm, paddingVertical: S.lg, marginTop: S.sm,
+    backgroundColor: C.errBg, borderRadius: R.lg,
+    borderWidth: 1, borderColor: C.err + "30",
+  },
+  signOutT: { fontSize: F.md, fontWeight: "600", color: C.err },
 });

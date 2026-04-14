@@ -1,4 +1,21 @@
 export type Source = "uploaded" | "extracted" | "manual" | "generated";
+
+export interface AuthUser {
+  email: string;
+}
+
+export interface Account {
+  email: string;
+  password: string;
+  patient: Patient;
+  docs: MedDocument[];
+  meds: Medication[];
+  conditions: Condition[];
+  allergies: Allergy[];
+  labs: LabResult[];
+  encounters: Encounter[];
+  timeline: TimelineEvent[];
+}
 export type ExtractionStatus = "pending" | "processing" | "completed" | "failed";
 export type Importance = "routine" | "notable" | "significant" | "critical";
 export type AbnormalFlag = "normal" | "low" | "high" | "critical_low" | "critical_high";

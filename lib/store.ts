@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type {
   Patient, MedDocument, Medication, Condition, Allergy,
   LabResult, Encounter, TimelineEvent, DoctorSummary, FilterCategory,
+  AuthUser, Account,
 } from "./types";
 export { extractDocument as mockExtract } from "./extract";
 
@@ -80,7 +81,24 @@ const TL: TimelineEvent[] = [
   { id: "t15", date: "2020-03-15", type: "diagnosis", title: "Diagnosed: Hypertension", description: "I10 — Started on lisinopril.", importance: "significant", isMilestone: true, source: "extracted", bodySystem: "cardiovascular", provider: "Dr. James Miller" },
 ];
 
-const DISCLAIMER = "Auto-generated from patient-uploaded records by VitaLink. Not medical advice. Verify with your clinician.";
+const DISCLAIMER = "Auto-generated from patient-uploaded records by Second Opinion. Not medical advice. Verify with your clinician.";
+
+const sortTL = (a: TimelineEvent[]) => [...a].sort((x, y) => new Date(y.date).getTime() - new Date(x.date).getTime());
+
+// ── Demo account (pre-seeded) ─────────────────────────────────────────────────
+
+const DEMO_ACCOUNT: Account = {
+  email: "maria.santos@email.com",
+  password: "demo1234",
+  patient: PAT,
+  docs: DOCS,
+  meds: MEDS,
+  conditions: CONDS,
+  allergies: ALRG,
+  labs: LABS,
+  encounters: ENCS,
+  timeline: sortTL(TL),
+};
 
 function fmtDate(d: string) {
   return new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -108,6 +126,14 @@ function makeSummary(s: Pick<Store, "conditions" | "meds" | "allergies" | "labs"
 // ════════════════════════════════════════════════════════════════
 
 interface Store {
+  // Auth
+  authUser: AuthUser | null;
+  accounts: Account[];
+  login: (email: string, password: string) => boolean;
+  signup: (data: { firstName: string; lastName: string; email: string; password: string; dateOfBirth: string; sex: string; phone: string }) => boolean;
+  logout: () => void;
+
+  // Patient data
   patient: Patient;
   docs: MedDocument[];
   meds: Medication[];
@@ -119,6 +145,8 @@ interface Store {
   summary: DoctorSummary | null;
   filter: FilterCategory;
   search: string;
+
+  // Actions
   loadDemo: () => void;
   addDoc: (d: MedDocument) => void;
   replaceDoc: (id: string, d: MedDocument) => void;
@@ -134,10 +162,72 @@ interface Store {
   filtered: () => TimelineEvent[];
 }
 
-const sortTL = (a: TimelineEvent[]) => [...a].sort((x, y) => new Date(y.date).getTime() - new Date(x.date).getTime());
+const EMPTY_PATIENT: Patient = {
+  id: "", firstName: "", lastName: "", dateOfBirth: "", sex: "", phone: "", email: "",
+};
 
 export const useStore = create<Store>((set, get) => ({
-  patient: PAT, docs: [], meds: [], conditions: [], allergies: [],
+  // Auth state
+  authUser: null,
+  accounts: [DEMO_ACCOUNT],
+
+  login: (email, password) => {
+    const acc = get().accounts.find(
+      (a) => a.email.toLowerCase() === email.toLowerCase() && a.password === password,
+    );
+    if (!acc) return false;
+    set({
+      authUser: { email: acc.email },
+      patient: acc.patient,
+      docs: acc.docs,
+      meds: acc.meds,
+      conditions: acc.conditions,
+      allergies: acc.allergies,
+      labs: acc.labs,
+      encounters: acc.encounters,
+      timeline: acc.timeline,
+      summary: null,
+    });
+    return true;
+  },
+
+  signup: (data) => {
+    const exists = get().accounts.find((a) => a.email.toLowerCase() === data.email.toLowerCase());
+    if (exists) return false;
+    const newPatient: Patient = {
+      id: `p-${Date.now()}`,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      dateOfBirth: data.dateOfBirth,
+      sex: data.sex,
+      phone: data.phone,
+      email: data.email,
+    };
+    const newAccount: Account = {
+      email: data.email,
+      password: data.password,
+      patient: newPatient,
+      docs: [], meds: [], conditions: [], allergies: [], labs: [], encounters: [], timeline: [],
+    };
+    set((s) => ({
+      accounts: [...s.accounts, newAccount],
+      authUser: { email: data.email },
+      patient: newPatient,
+      docs: [], meds: [], conditions: [], allergies: [], labs: [], encounters: [], timeline: [],
+      summary: null,
+    }));
+    return true;
+  },
+
+  logout: () => set({
+    authUser: null,
+    patient: EMPTY_PATIENT,
+    docs: [], meds: [], conditions: [], allergies: [], labs: [], encounters: [], timeline: [],
+    summary: null,
+  }),
+
+  // Patient data
+  patient: EMPTY_PATIENT, docs: [], meds: [], conditions: [], allergies: [],
   labs: [], encounters: [], timeline: [], summary: null,
   filter: "all", search: "",
 

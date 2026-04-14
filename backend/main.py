@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 # ── App ───────────────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="VitaLink Backend",
-    description="Gemini Vision-powered medical document extraction for Second Opinion / VitaLink",
+    title="Second Opinion Backend",
+    description="Gemini Vision-powered medical document extraction for Second Opinion",
     version="1.1.0",
 )
 

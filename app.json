@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "VitaLink",
-    "slug": "vitalink",
+    "name": "Second Opinion",
+    "slug": "second-opinion",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "scheme": "vitalink",
+    "scheme": "secondopinion",
     "web": { "bundler": "metro", "output": "single" },
     "plugins": ["expo-router"],
     "ios": { "supportsTablet": true },

@@ -113,7 +113,7 @@ export default function Upload() {
   return (
     <ScrollView style={st.wrap} contentContainerStyle={st.cnt}>
       <Text style={st.h}>Add a Medical Record</Text>
-      <Text style={st.sub}>Upload any document — VitaLink extracts structured data and adds it to your records and timeline automatically.</Text>
+      <Text style={st.sub}>Upload any document — Second Opinion extracts structured data and adds it to your records and timeline automatically.</Text>
 
       {/* Processing state */}
       {busy && (
