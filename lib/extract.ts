@@ -114,21 +114,26 @@ async function extractFromBackend(
   fileAsset?: { uri: string; name: string; mimeType: string },
 ): Promise<ExtractionResult | null> {
   try {
+    if (!fileAsset?.uri) {
+      console.log("[VitaLink] No fileAsset URI — skipping backend");
+      return null;
+    }
+
+    console.log("[VitaLink] Calling backend with file:", fileAsset.name, fileAsset.uri.slice(0, 60));
+
     const form = new FormData();
+    const isWeb = typeof document !== "undefined";
 
-    if (!fileAsset?.uri) return null;
-
-    const isWeb = typeof document !== "undefined"; // true in browser, false in RN
     if (isWeb) {
-      // Browser: fetch the blob from the file URI, then append as a real File object
+      console.log("[VitaLink] Web mode — fetching blob from URI");
       const blobRes = await fetch(fileAsset.uri);
       const blob = await blobRes.blob();
+      console.log("[VitaLink] Blob fetched:", blob.size, "bytes", blob.type);
       const file = new File([blob], fileAsset.name || doc.fileName, {
-        type: fileAsset.mimeType || doc.mimeType || "application/octet-stream",
+        type: fileAsset.mimeType || blob.type || "application/octet-stream",
       });
       form.append("file", file);
     } else {
-      // React Native — pass the asset descriptor directly (RN FormData handles it)
       form.append("file", {
         uri: fileAsset.uri,
         name: fileAsset.name || doc.fileName,
@@ -138,27 +143,32 @@ async function extractFromBackend(
 
     form.append("doc_id", doc.id);
 
-    const res = await fetch(`${BACKEND_URL}/extract`, {
-      method: "POST",
-      body: form,
-    });
+    console.log("[VitaLink] POSTing to", `${BACKEND_URL}/extract`);
+    const res = await fetch(`${BACKEND_URL}/extract`, { method: "POST", body: form });
+    console.log("[VitaLink] Backend response status:", res.status);
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const err = await res.text();
+      console.warn("[VitaLink] Backend error:", res.status, err);
+      return null;
+    }
 
     const data = await res.json();
+    console.log("[VitaLink] Extraction success — events:", data.events?.length, "conditions:", data.conditions?.length, "meds:", data.medications?.length);
 
     return {
-      updated:    { ...data.updated, extractionPath: "ai_extracted" } as MedDocument,
-      events:     data.events     ?? [],
+      updated:     { ...data.updated, extractionPath: "ai_extracted" } as MedDocument,
+      events:      data.events      ?? [],
       medications: data.medications ?? [],
-      conditions: data.conditions ?? [],
-      allergies:  data.allergies  ?? [],
-      labs:       data.labs       ?? [],
-      encounters: data.encounters ?? [],
+      conditions:  data.conditions  ?? [],
+      allergies:   data.allergies   ?? [],
+      labs:        data.labs        ?? [],
+      encounters:  data.encounters  ?? [],
       extractionPath: "ai_extracted",
     };
-  } catch {
-    return null; // backend unavailable — fall through to mock
+  } catch (e) {
+    console.error("[VitaLink] extractFromBackend threw:", e);
+    return null;
   }
 }
 

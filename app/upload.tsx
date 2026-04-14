@@ -78,27 +78,35 @@ export default function Upload() {
   };
 
   const pickFile = async () => {
+    const isWeb = typeof document !== "undefined";
+
+    if (isWeb) {
+      // Web: use a hidden <input type="file"> to get a real File object with a blob URI
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/pdf,image/*";
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        const uri = URL.createObjectURL(file);
+        process(file.name, undefined, { uri, name: file.name, mimeType: file.type || "application/pdf" });
+      };
+      input.click();
+      return;
+    }
+
+    // Native (iOS / Android): use Expo document picker
     try {
       const DP = await import("expo-document-picker");
-      // copyToCacheDirectory causes errors on web — omit it for web
-      const isWeb = typeof document !== "undefined";
-      const res = await DP.getDocumentAsync({
-        type: ["application/pdf", "image/*"],
-        ...(isWeb ? {} : { copyToCacheDirectory: true }),
-      });
+      const res = await DP.getDocumentAsync({ type: ["application/pdf", "image/*"], copyToCacheDirectory: true });
       if (!res.canceled && res.assets?.[0]) {
         const asset = res.assets[0];
-        process(asset.name, undefined, {
-          uri: asset.uri,
-          name: asset.name,
-          mimeType: asset.mimeType ?? "application/pdf",
-        });
+        process(asset.name, undefined, { uri: asset.uri, name: asset.name, mimeType: asset.mimeType ?? "application/pdf" });
         return;
       }
     } catch (e) {
       console.warn("[VitaLink] Document picker failed:", e);
     }
-    // Fallback: mock-only extraction (no real file)
     process(`upload_${Date.now()}.pdf`);
   };
 

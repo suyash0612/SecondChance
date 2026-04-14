@@ -44,6 +44,13 @@ def root():
     from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/docs")
 
+@app.get("/sample_pdf", include_in_schema=False)
+def sample_pdf():
+    from fastapi.responses import FileResponse
+    import os
+    path = os.path.join(os.path.dirname(__file__), "sample_medical_record.pdf")
+    return FileResponse(path, media_type="application/pdf", filename="sample_medical_record.pdf")
+
 @app.get("/health")
 def health():
     return {"status": "ok", "version": "1.1.0"}
