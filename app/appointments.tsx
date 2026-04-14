@@ -16,8 +16,9 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../lib/store";
 import { Card, SectionHeader, Btn, Badge } from "../components/UI";
-import { C, S, F, R, shadow } from "../lib/theme";
+import { C, S, F, R, shadow, colorOpacity } from "../lib/theme";
 import type { Appointment } from "../lib/types";
+import { useToast } from "../lib/useToast";
 
 // Enable layout animation on Android
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -101,7 +102,7 @@ function ApptCard({
 
       {/* Provider row */}
       <View style={st.apptProviderRow}>
-        <View style={[st.apptProviderIcon, { backgroundColor: C.encounter + "18" }]}>
+        <View style={[st.apptProviderIcon, { backgroundColor: colorOpacity('encounter', 9) }]}>
           <Ionicons name="person-outline" size={16} color={C.encounter} />
         </View>
         <View style={{ flex: 1 }}>
@@ -248,26 +249,64 @@ function AddForm({ onSave, onCancel }: { onSave: () => void; onCancel: () => voi
       <View style={st.row}>
         <View style={{ flex: 1 }}>
           <Text style={st.label}>Date *</Text>
-          <TextInput
-            style={st.input}
-            value={form.date}
-            onChangeText={(v) => patch("date", v)}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={C.t3}
-            keyboardType="numbers-and-punctuation"
-          />
+          {typeof window !== "undefined" ? (
+            <input
+              type="date"
+              value={form.date}
+              onChange={(e) => patch("date", e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: C.brd,
+                fontSize: 16,
+                fontFamily: "system-ui, -apple-system, sans-serif",
+                backgroundColor: C.card,
+                color: C.t1,
+              } as any}
+            />
+          ) : (
+            <TextInput
+              style={st.input}
+              value={form.date}
+              onChangeText={(v) => patch("date", v)}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={C.t3}
+              keyboardType="numbers-and-punctuation"
+            />
+          )}
         </View>
         <View style={{ width: S.md }} />
         <View style={{ flex: 1 }}>
           <Text style={st.label}>Time</Text>
-          <TextInput
-            style={st.input}
-            value={form.time}
-            onChangeText={(v) => patch("time", v)}
-            placeholder="HH:MM"
-            placeholderTextColor={C.t3}
-            keyboardType="numbers-and-punctuation"
-          />
+          {typeof window !== "undefined" ? (
+            <input
+              type="time"
+              value={form.time}
+              onChange={(e) => patch("time", e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px 16px",
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: C.brd,
+                fontSize: 16,
+                fontFamily: "system-ui, -apple-system, sans-serif",
+                backgroundColor: C.card,
+                color: C.t1,
+              } as any}
+            />
+          ) : (
+            <TextInput
+              style={st.input}
+              value={form.time}
+              onChangeText={(v) => patch("time", v)}
+              placeholder="HH:MM"
+              placeholderTextColor={C.t3}
+              keyboardType="numbers-and-punctuation"
+            />
+          )}
         </View>
       </View>
 
@@ -314,12 +353,12 @@ function AddForm({ onSave, onCancel }: { onSave: () => void; onCancel: () => voi
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function AppointmentsScreen() {
+  const [showForm, setShowForm] = useState(false);
   const router = useRouter();
+  const toast = useToast();
   const appointments = useStore((s) => s.appointments);
   const updateAppointment = useStore((s) => s.updateAppointment);
   const deleteAppointment = useStore((s) => s.deleteAppointment);
-
-  const [showForm, setShowForm] = useState(false);
 
   const upcoming = useMemo(
     () =>
@@ -340,7 +379,7 @@ export default function AppointmentsScreen() {
   function handleDelete(id: string) {
     Alert.alert("Delete appointment", "Remove this appointment?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: () => deleteAppointment(id) },
+      { text: "Delete", style: "destructive", onPress: () => { deleteAppointment(id); toast.success("Appointment deleted"); } },
     ]);
   }
 
@@ -349,7 +388,7 @@ export default function AppointmentsScreen() {
       { text: "Cancel", style: "cancel" },
       {
         text: "Mark Complete",
-        onPress: () => updateAppointment(id, { status: "completed" }),
+        onPress: () => { updateAppointment(id, { status: "completed" }); toast.success("Marked as completed"); },
       },
     ]);
   }
@@ -382,15 +421,15 @@ export default function AppointmentsScreen() {
 
         {/* Summary stats */}
         <View style={st.statsRow}>
-          <View style={[st.statBox, { backgroundColor: C.ok + "14" }]}>
+          <View style={[st.statBox, { backgroundColor: colorOpacity('ok', 8) }]}>
             <Text style={[st.statNum, { color: C.ok }]}>{upcoming.length}</Text>
             <Text style={st.statLbl}>Upcoming</Text>
           </View>
-          <View style={[st.statBox, { backgroundColor: C.t2 + "14" }]}>
+          <View style={[st.statBox, { backgroundColor: colorOpacity('t2', 8) }]}>
             <Text style={[st.statNum, { color: C.t2 }]}>{past.filter((a) => a.status === "completed").length}</Text>
             <Text style={st.statLbl}>Completed</Text>
           </View>
-          <View style={[st.statBox, { backgroundColor: C.err + "14" }]}>
+          <View style={[st.statBox, { backgroundColor: colorOpacity('err', 8) }]}>
             <Text style={[st.statNum, { color: C.err }]}>{past.filter((a) => a.status === "cancelled").length}</Text>
             <Text style={st.statLbl}>Cancelled</Text>
           </View>
@@ -402,6 +441,7 @@ export default function AppointmentsScreen() {
             onSave={() => {
               LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
               setShowForm(false);
+              toast.success("Appointment added");
             }}
             onCancel={() => {
               LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -483,7 +523,7 @@ const st = StyleSheet.create({
     justifyContent: "center",
     ...shadow,
   },
-  addIconBtnActive: { backgroundColor: C.errBg, borderColor: C.err + "40" },
+  addIconBtnActive: { backgroundColor: C.errBg, borderColor: colorOpacity('err', 25) },
 
   statsRow: { flexDirection: "row", gap: S.sm, marginBottom: S.xl },
   statBox: {
