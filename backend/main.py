@@ -39,6 +39,11 @@ app.add_middleware(
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
+@app.get("/", include_in_schema=False)
+def root():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/docs")
+
 @app.get("/health")
 def health():
     return {"status": "ok", "version": "1.1.0"}

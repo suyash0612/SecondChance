@@ -80,13 +80,25 @@ export default function Upload() {
   const pickFile = async () => {
     try {
       const DP = await import("expo-document-picker");
-      const res = await DP.getDocumentAsync({ type: ["application/pdf", "image/*"], copyToCacheDirectory: true });
+      // copyToCacheDirectory causes errors on web — omit it for web
+      const isWeb = typeof document !== "undefined";
+      const res = await DP.getDocumentAsync({
+        type: ["application/pdf", "image/*"],
+        ...(isWeb ? {} : { copyToCacheDirectory: true }),
+      });
       if (!res.canceled && res.assets?.[0]) {
         const asset = res.assets[0];
-        process(asset.name, undefined, { uri: asset.uri, name: asset.name, mimeType: asset.mimeType ?? "application/pdf" });
+        process(asset.name, undefined, {
+          uri: asset.uri,
+          name: asset.name,
+          mimeType: asset.mimeType ?? "application/pdf",
+        });
         return;
       }
-    } catch { /* picker unavailable on web */ }
+    } catch (e) {
+      console.warn("[VitaLink] Document picker failed:", e);
+    }
+    // Fallback: mock-only extraction (no real file)
     process(`upload_${Date.now()}.pdf`);
   };
 
