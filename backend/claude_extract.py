@@ -97,11 +97,10 @@ Rules:
 - Do not invent data. Do not include patient name or DOB.
 """
 
-_PROMPT_TEMPLATE = (
+_PROMPT_PREFIX = (
     "You are a clinical data extraction engine. Read the OCR text from the medical "
     "document below and extract all clinical entities.\n\n"
     + _SYSTEM_INSTRUCTIONS
-    + "\n<document filename=\"{filename}\">\n{ocr_text}\n</document>"
 )
 
 
@@ -134,7 +133,7 @@ def extract_with_vision(file_bytes: bytes, mime_type: str, doc_id: str, file_nam
 
 def extract_with_claude(ocr_text: str, doc_id: str, file_name: str) -> Dict[str, Any]:
     """Call Gemini to extract structured clinical data from OCR text."""
-    prompt = _PROMPT_TEMPLATE.format(filename=file_name, ocr_text=ocr_text)
+    prompt = _PROMPT_PREFIX + f'\n<document filename="{file_name}">\n{ocr_text}\n</document>'
     response = _client.models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt,
