@@ -1,10 +1,18 @@
-import type { MedDocument, TimelineEvent } from "./types";
+import type { MedDocument, TimelineEvent, Medication, Condition, Allergy, LabResult, Encounter } from "./types";
+
+// ── Backend URL — change to your deployed URL in production ───────────────────
+const BACKEND_URL = "http://localhost:8000";
 
 // ── Return shape ──────────────────────────────────────────────────────────────
 export interface ExtractionResult {
   updated: MedDocument;
   events: TimelineEvent[];
-  extractionPath: "mock" | "ocr_stub";
+  medications?: Medication[];
+  conditions?: Condition[];
+  allergies?: Allergy[];
+  labs?: LabResult[];
+  encounters?: Encounter[];
+  extractionPath: "mock" | "ocr_stub" | "ai_extracted";
 }
 
 // ── Classification map ────────────────────────────────────────────────────────
@@ -100,11 +108,64 @@ function parseOcrFields(text: string, key: string): ParsedFields {
   }
 }
 
+// ── Real backend extraction ───────────────────────────────────────────────────
+async function extractFromBackend(
+  doc: MedDocument,
+  fileAsset?: { uri: string; name: string; mimeType: string },
+): Promise<ExtractionResult | null> {
+  try {
+    const form = new FormData();
+
+    if (fileAsset?.uri) {
+      // React Native / Expo — pass the file asset directly
+      form.append("file", {
+        uri: fileAsset.uri,
+        name: fileAsset.name || doc.fileName,
+        type: fileAsset.mimeType || doc.mimeType,
+      } as any);
+    } else {
+      // Web — nothing real to send; skip backend
+      return null;
+    }
+
+    form.append("doc_id", doc.id);
+
+    const res = await fetch(`${BACKEND_URL}/extract`, {
+      method: "POST",
+      body: form,
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+
+    return {
+      updated:    { ...data.updated, extractionPath: "ai_extracted" } as MedDocument,
+      events:     data.events     ?? [],
+      medications: data.medications ?? [],
+      conditions: data.conditions ?? [],
+      allergies:  data.allergies  ?? [],
+      labs:       data.labs       ?? [],
+      encounters: data.encounters ?? [],
+      extractionPath: "ai_extracted",
+    };
+  } catch {
+    return null; // backend unavailable — fall through to mock
+  }
+}
+
 // ── Main extraction entry point ───────────────────────────────────────────────
 export async function extractDocument(
   doc: MedDocument,
   ocrText?: string,
+  fileAsset?: { uri: string; name: string; mimeType: string },
 ): Promise<ExtractionResult> {
+  // Try real backend first (only when a real file asset is provided)
+  if (fileAsset) {
+    const backendResult = await extractFromBackend(doc, fileAsset);
+    if (backendResult) return backendResult;
+  }
+
   await new Promise((r) => setTimeout(r, 1200 + Math.random() * 800));
 
   const today    = new Date().toISOString().split("T")[0];

@@ -20,23 +20,32 @@ const DEMOS = [
     ocr: "PROGRESS NOTE - Downtown Family Medicine\nPatient: Maria Santos DOB: 03/15/1978\nDate of Visit: 10/28/2025\nChief Complaint: Annual physical examination\nProvider: Dr. Sarah Chen MD\nBlood Pressure: 134/86 mmHg\nAssessment: Routine annual exam. Continue current medications." },
 ];
 
-type SuccessState = { docId: string; name: string; classification: string; eventCount: number; extractionPath: "mock" | "ocr_stub" };
+type SuccessState = { docId: string; name: string; classification: string; eventCount: number; extractionPath: "mock" | "ocr_stub" | "ai_extracted" };
 
 export default function Upload() {
   const router = useRouter();
   const addDoc = useStore((s) => s.addDoc);
   const replaceDoc = useStore((s) => s.replaceDoc);
   const addEvents = useStore((s) => s.addEvents);
+  const addMeds = useStore((s) => s.addMeds);
+  const addConditions = useStore((s) => s.addConditions);
+  const addAllergies = useStore((s) => s.addAllergies);
+  const addLabs = useStore((s) => s.addLabs);
+  const addEncounters = useStore((s) => s.addEncounters);
 
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState(0);
   const [busyName, setBusyName] = useState("");
   const [success, setSuccess] = useState<SuccessState | null>(null);
 
-  const process = async (name: string, ocrText?: string) => {
+  const process = async (
+    name: string,
+    ocrText?: string,
+    fileAsset?: { uri: string; name: string; mimeType: string },
+  ) => {
     setSuccess(null);
     const doc: MedDocument = {
-      id: `doc-${Date.now()}`, fileName: name, mimeType: "application/pdf",
+      id: `doc-${Date.now()}`, fileName: name, mimeType: fileAsset?.mimeType ?? "application/pdf",
       uploadedAt: new Date().toISOString(), classification: "Pending…", extractionStatus: "processing",
     };
     addDoc(doc);
@@ -48,11 +57,17 @@ export default function Upload() {
     const stepTimer2 = setTimeout(() => setStep(2), 1100);
 
     try {
-      const { updated, events, extractionPath } = await extractDocument(doc, ocrText);
+      const result = await extractDocument(doc, ocrText, fileAsset);
+      const { updated, events, medications, conditions, allergies, labs, encounters, extractionPath } = result;
       clearTimeout(stepTimer1);
       clearTimeout(stepTimer2);
       replaceDoc(doc.id, updated);
       if (events.length > 0) addEvents(events);
+      if (medications?.length) addMeds(medications);
+      if (conditions?.length) addConditions(conditions);
+      if (allergies?.length) addAllergies(allergies);
+      if (labs?.length) addLabs(labs);
+      if (encounters?.length) addEncounters(encounters);
       setBusy(false);
       setSuccess({ docId: doc.id, name, classification: updated.classification, eventCount: events.length, extractionPath });
     } catch {
@@ -66,7 +81,11 @@ export default function Upload() {
     try {
       const DP = await import("expo-document-picker");
       const res = await DP.getDocumentAsync({ type: ["application/pdf", "image/*"], copyToCacheDirectory: true });
-      if (!res.canceled && res.assets?.[0]) { process(res.assets[0].name); return; }
+      if (!res.canceled && res.assets?.[0]) {
+        const asset = res.assets[0];
+        process(asset.name, undefined, { uri: asset.uri, name: asset.name, mimeType: asset.mimeType ?? "application/pdf" });
+        return;
+      }
     } catch { /* picker unavailable on web */ }
     process(`upload_${Date.now()}.pdf`);
   };
@@ -109,9 +128,17 @@ export default function Upload() {
             <Text style={st.provenanceT}>Added to Records &amp; Timeline · Patient-controlled · Not shared without consent</Text>
           </View>
           <View style={st.pathRow}>
-            <Ionicons name={success.extractionPath === "ocr_stub" ? "scan-outline" : "flask-outline"} size={12} color={success.extractionPath === "ocr_stub" ? C.pri : C.t3} />
-            <Text style={[st.pathT, success.extractionPath === "ocr_stub" && { color: C.pri, fontWeight: "600" }]}>
-              {success.extractionPath === "ocr_stub" ? "OCR text path · structured extraction" : "Mock extraction path"}
+            <Ionicons
+              name={success.extractionPath === "ai_extracted" ? "sparkles-outline" : success.extractionPath === "ocr_stub" ? "scan-outline" : "flask-outline"}
+              size={12}
+              color={success.extractionPath !== "mock" ? C.pri : C.t3}
+            />
+            <Text style={[st.pathT, success.extractionPath !== "mock" && { color: C.pri, fontWeight: "600" }]}>
+              {success.extractionPath === "ai_extracted"
+                ? "AI extracted · Claude + OCR pipeline"
+                : success.extractionPath === "ocr_stub"
+                ? "OCR text path · structured extraction"
+                : "Mock extraction path"}
             </Text>
           </View>
           <View style={st.successActs}>

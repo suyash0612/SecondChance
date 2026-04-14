@@ -123,6 +123,11 @@ interface Store {
   addDoc: (d: MedDocument) => void;
   replaceDoc: (id: string, d: MedDocument) => void;
   addEvents: (e: TimelineEvent[]) => void;
+  addMeds: (m: Medication[]) => void;
+  addConditions: (c: Condition[]) => void;
+  addAllergies: (a: Allergy[]) => void;
+  addLabs: (l: LabResult[]) => void;
+  addEncounters: (e: Encounter[]) => void;
   setFilter: (f: FilterCategory) => void;
   setSearch: (s: string) => void;
   genSummary: () => void;
@@ -145,6 +150,11 @@ export const useStore = create<Store>((set, get) => ({
   addDoc: (d) => set((s) => ({ docs: [d, ...s.docs] })),
   replaceDoc: (id, d) => set((s) => ({ docs: s.docs.map((x) => x.id === id ? d : x) })),
   addEvents: (e) => set((s) => ({ timeline: sortTL([...e, ...s.timeline]) })),
+  addMeds: (m) => set((s) => ({ meds: [...m, ...s.meds] })),
+  addConditions: (c) => set((s) => ({ conditions: [...c, ...s.conditions] })),
+  addAllergies: (a) => set((s) => ({ allergies: [...a, ...s.allergies] })),
+  addLabs: (l) => set((s) => ({ labs: [...l, ...s.labs] })),
+  addEncounters: (e) => set((s) => ({ encounters: [...e, ...s.encounters] })),
   setFilter: (f) => set({ filter: f }),
   setSearch: (s) => set({ search: s }),
 
