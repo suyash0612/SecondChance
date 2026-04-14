@@ -1,5 +1,5 @@
 """
-Claude-powered clinical entity extraction.
+Gemini-powered clinical entity extraction.
 
 Takes raw OCR text from a medical document and returns a fully structured
 payload (conditions, medications, allergies, labs, encounters, timeline events)
@@ -8,45 +8,49 @@ that matches the TypeScript data model in lib/types.ts.
 
 import json
 import logging
+import os
 import uuid
 from datetime import date
-from typing import Any
+from typing import Any, Dict, List, Optional
 
-import anthropic
+from google import genai
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-_client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from env
+_client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 # ── System prompt ─────────────────────────────────────────────────────────────
 
-_SYSTEM = """\
-You are a clinical data extraction engine. Your job is to read OCR text from \
-a medical document and output a single, strictly valid JSON object containing \
-all identifiable clinical entities.
+_PROMPT_TEMPLATE = """\
+You are a clinical data extraction engine. Read the OCR text from the medical \
+document below and output a single, strictly valid JSON object containing all \
+identifiable clinical entities.
 
 Output ONLY the JSON object — no markdown fences, no explanation.
 
 Required top-level keys (use empty arrays [] when nothing is found):
 
-{
+{{
   "classification": "<one of: Lab Report | Progress Note | Discharge Summary | Consult Note | Imaging Report | Prescription | Medical Document>",
   "extractedDate":     "<YYYY-MM-DD — date of the visit/test/report; today if unknown>",
   "extractedProvider": "<full name with title, e.g. Dr. Jane Smith>",
   "extractedFacility": "<clinic or hospital name>",
 
   "conditions": [
-    {
+    {{
       "name":        "<condition name>",
       "icd10":       "<ICD-10 code if present, else null>",
       "status":      "<active | resolved | managed>",
       "onsetDate":   "<YYYY-MM or YYYY-MM-DD, null if unknown>",
       "diagnosedBy": "<provider name, null if unknown>"
-    }
+    }}
   ],
 
   "medications": [
-    {
+    {{
       "name":       "<drug name>",
       "dosage":     "<e.g. 500 mg>",
       "frequency":  "<e.g. twice daily>",
@@ -55,19 +59,19 @@ Required top-level keys (use empty arrays [] when nothing is found):
       "endDate":    "<YYYY-MM-DD or null>",
       "prescriber": "<provider name or null>",
       "reason":     "<indication or null>"
-    }
+    }}
   ],
 
   "allergies": [
-    {
+    {{
       "substance": "<allergen>",
       "reaction":  "<reaction description>",
       "severity":  "<mild | moderate | severe>"
-    }
+    }}
   ],
 
   "labs": [
-    {
+    {{
       "testName": "<test name>",
       "value":    "<numeric or text result>",
       "unit":     "<unit of measure>",
@@ -75,27 +79,31 @@ Required top-level keys (use empty arrays [] when nothing is found):
       "refHigh":  <numeric upper bound or null>,
       "flag":     "<normal | low | high | critical_low | critical_high>",
       "date":     "<YYYY-MM-DD>"
-    }
+    }}
   ],
 
   "encounters": [
-    {
+    {{
       "date":      "<YYYY-MM-DD>",
       "type":      "<office_visit | er | imaging | procedure | surgery>",
       "complaint": "<chief complaint or reason for visit>",
       "summary":   "<one-sentence clinical summary>",
       "provider":  "<provider name>",
       "facility":  "<facility name>"
-    }
+    }}
   ]
-}
+}}
 
 Rules:
 - Only include entities you can confidently identify in the text.
 - For lab flags: derive from reference ranges in the text; if annotated HIGH/LOW/CRITICAL use that directly.
 - Convert all dates to ISO format (YYYY-MM-DD). If only month/year is known, use YYYY-MM.
 - Do not invent data not present in the document.
-- Do not include the patient's name or DOB in the output.
+- Do not include the patient name or DOB in the output.
+
+<document filename="{filename}">
+{ocr_text}
+</document>
 """
 
 
@@ -103,39 +111,34 @@ Rules:
 
 def extract_with_claude(ocr_text: str, doc_id: str, file_name: str) -> dict[str, Any]:
     """
-    Call Claude to extract structured clinical data from OCR text.
-    Returns a dict with keys: classification, extractedDate, extractedProvider,
-    extractedFacility, conditions, medications, allergies, labs, encounters, events.
+    Call Gemini to extract structured clinical data from OCR text.
+    (Function name kept as extract_with_claude for import compatibility.)
     """
     today = date.today().isoformat()
 
-    response = _client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=4096,
-        system=_SYSTEM,
-        messages=[
-            {
-                "role": "user",
-                "content": (
-                    f"Extract all clinical data from the following medical document.\n\n"
-                    f"<document filename=\"{file_name}\">\n"
-                    f"{ocr_text}\n"
-                    f"</document>"
-                ),
-            }
-        ],
+    prompt = _PROMPT_TEMPLATE.format(filename=file_name, ocr_text=ocr_text)
+    response = _client.models.generate_content(
+        model="gemini-1.5-flash",
+        contents=prompt,
     )
 
-    raw_json = response.content[0].text.strip()
-    logger.info("Claude raw output (%d chars)", len(raw_json))
+    raw_json = response.text.strip()
+    # Strip markdown fences if the model adds them anyway
+    if raw_json.startswith("```"):
+        raw_json = raw_json.split("```")[1]
+        if raw_json.startswith("json"):
+            raw_json = raw_json[4:]
+    raw_json = raw_json.strip()
+
+    logger.info("Gemini raw output (%d chars)", len(raw_json))
 
     data = json.loads(raw_json)
 
     # ── Normalise top-level metadata ─────────────────────────────────────────
-    classification   = data.get("classification", "Medical Document")
-    extracted_date   = data.get("extractedDate") or today
-    provider         = data.get("extractedProvider") or "Unknown Provider"
-    facility         = data.get("extractedFacility") or "Unknown Facility"
+    classification    = data.get("classification", "Medical Document")
+    extracted_date    = data.get("extractedDate") or today
+    provider          = data.get("extractedProvider") or "Unknown Provider"
+    facility          = data.get("extractedFacility") or "Unknown Facility"
 
     # ── Build typed entity lists ─────────────────────────────────────────────
 
@@ -222,7 +225,7 @@ def extract_with_claude(ocr_text: str, doc_id: str, file_name: str) -> dict[str,
     ]
 
     # ── Build timeline events ────────────────────────────────────────────────
-    events: list[dict[str, Any]] = []
+    events: List[dict] = []
 
     for enc in encounters:
         enc_type = enc["type"]
@@ -249,7 +252,7 @@ def extract_with_claude(ocr_text: str, doc_id: str, file_name: str) -> dict[str,
             "bodySystem":  "general",
         })
 
-    for lab in labs[:6]:  # cap to avoid flooding timeline
+    for lab in labs[:6]:
         flag = lab["flag"]
         flag_suffix = f" ({flag.upper().replace('_', ' ')})" if flag != "normal" else ""
         importance = (
@@ -308,7 +311,6 @@ def extract_with_claude(ocr_text: str, doc_id: str, file_name: str) -> dict[str,
             "bodySystem":  "general",
         })
 
-    # Ensure at least one event so the timeline always updates
     if not events:
         events.append({
             "id":          _uid("t"),
@@ -326,16 +328,16 @@ def extract_with_claude(ocr_text: str, doc_id: str, file_name: str) -> dict[str,
         })
 
     return {
-        "classification":   classification,
-        "extractedDate":    extracted_date,
+        "classification":    classification,
+        "extractedDate":     extracted_date,
         "extractedProvider": provider,
         "extractedFacility": facility,
-        "conditions":       conditions,
-        "medications":      medications,
-        "allergies":        allergies,
-        "labs":             labs,
-        "encounters":       encounters,
-        "events":           events,
+        "conditions":        conditions,
+        "medications":       medications,
+        "allergies":         allergies,
+        "labs":              labs,
+        "encounters":        encounters,
+        "events":            events,
     }
 
 
@@ -345,7 +347,7 @@ def _uid(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex[:8]}"
 
 
-def _to_float(val: Any) -> float | None:
+def _to_float(val: Any) -> Optional[float]:
     if val is None:
         return None
     try:

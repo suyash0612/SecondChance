@@ -9,6 +9,7 @@ Priority order:
 
 import io
 import logging
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ def _extract_pdf_native(file_bytes: bytes) -> str:
     """Extract selectable text from a digital PDF using pdfplumber."""
     try:
         import pdfplumber
-        parts: list[str] = []
+        parts: List[str] = []
         with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
             for page in pdf.pages:
                 page_text = page.extract_text()
@@ -71,7 +72,7 @@ def _ocr_pdf_pages(file_bytes: bytes) -> str:
         import pytesseract
 
         images = pdf2image.convert_from_bytes(file_bytes, dpi=200)
-        parts: list[str] = []
+        parts: List[str] = []
         for img in images:
             parts.append(pytesseract.image_to_string(img))
         text = "\n\n".join(parts)
