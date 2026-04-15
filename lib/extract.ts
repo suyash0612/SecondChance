@@ -1,7 +1,12 @@
 import type { MedDocument, TimelineEvent, Medication, Condition, Allergy, LabResult, Encounter } from "./types";
 
-// ── Backend URL — use environment variable with localhost fallback ───────────────────
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || "http://localhost:8000";
+// ── Backend URL ────────────────────────────────────────────────────────────────
+// Priority: EXPO_PUBLIC_BACKEND_URL env var → production auto-detect → localhost
+const BACKEND_URL =
+  process.env.EXPO_PUBLIC_BACKEND_URL ||
+  (typeof window !== "undefined" && window.location.hostname !== "localhost"
+    ? "https://secondchance-xvxk.onrender.com"
+    : "http://localhost:8000");
 
 // ── Return shape ──────────────────────────────────────────────────────────────
 export interface ExtractionResult {
