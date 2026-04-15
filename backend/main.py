@@ -14,9 +14,16 @@ from typing import Optional
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from .claude_extract import extract_with_vision, extract_with_claude
-from .models import ExtractionResponse
-from .ocr import extract_text
+try:
+    # When running as a module (e.g., uvicorn backend.main:app)
+    from backend.claude_extract import extract_with_vision, extract_with_claude
+    from backend.models import ExtractionResponse
+    from backend.ocr import extract_text
+except ImportError:
+    # When running directly from backend directory (e.g., uvicorn main:app)
+    from claude_extract import extract_with_vision, extract_with_claude  # type: ignore
+    from models import ExtractionResponse  # type: ignore
+    from ocr import extract_text  # type: ignore
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(name)s | %(message)s")
 logger = logging.getLogger(__name__)

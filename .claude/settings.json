@@ -1,0 +1,6 @@
+{
+  "enabledMcpjsonServers": ["render"],
+  "env": {
+    "RENDER_API_KEY": "rnd_IlWiNDVlBBqbfzo4R9ujCurU5InU"
+  }
+}

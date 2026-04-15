@@ -1,7 +1,7 @@
 import type { MedDocument, TimelineEvent, Medication, Condition, Allergy, LabResult, Encounter } from "./types";
 
-// ── Backend URL — change to your deployed URL in production ───────────────────
-const BACKEND_URL = "http://localhost:8000";
+// ── Backend URL — use environment variable with localhost fallback ───────────────────
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 // ── Return shape ──────────────────────────────────────────────────────────────
 export interface ExtractionResult {
