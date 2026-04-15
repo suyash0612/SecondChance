@@ -10,14 +10,3 @@ services:
       - key: PORT
         value: "8000"
     healthCheckPath: /health
-
-  - type: static_site
-    name: second-opinion-frontend
-    buildCommand: npm install && npx expo export --platform web
-    staticPublishPath: dist
-    envVars:
-      - key: EXPO_PUBLIC_BACKEND_URL
-        fromService:
-          type: web
-          name: second-opinion-backend
-          property: url
