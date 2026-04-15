@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "render": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["render-mcp.js"],
+      "env": {
+        "RENDER_API_KEY": "${RENDER_API_KEY}"
+      }
+    }
+  }
+}
