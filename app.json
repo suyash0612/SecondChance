@@ -6,8 +6,10 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "secondopinion",
+    "experiments": {
+      "baseUrl": "/SecondChance/"
+    },
     "web": {
-      "publicPath": "/SecondChance/",
       "favicon": "./assets/favicon.png",
       "name": "Second Opinion",
       "shortName": "2nd Opinion",
@@ -17,7 +19,7 @@
       "output": "single"
     },
     "plugins": [
-      ["expo-router", { "origin": "https://suyash0612.github.io/SecondChance/" }]
+      "expo-router"
     ],
     "ios": { "supportsTablet": true },
     "android": {}
