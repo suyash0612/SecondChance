@@ -2,7 +2,7 @@
   "name": "vitalink",
   "version": "1.0.0",
   "private": false,
-  "homepage": "https://suyash0612.github.io/SecondChance",
+  "homepage": "/SecondChance",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
