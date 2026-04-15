@@ -5,7 +5,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../lib/store";
 import { extractDocument } from "../lib/extract";
 import { Card, Btn, Disclaimer } from "../components/UI";
-import { C, S, F, R, shadow } from "../lib/theme";
+import { C, S, F, R, shadow, colorOpacity } from "../lib/theme";
+import { useToast } from "../lib/useToast";
 import type { MedDocument } from "../lib/types";
 
 const STEPS = ["Reading document…", "Extracting structured data…", "Updating records & timeline…"];
@@ -20,24 +21,35 @@ const DEMOS = [
     ocr: "PROGRESS NOTE - Downtown Family Medicine\nPatient: Maria Santos DOB: 03/15/1978\nDate of Visit: 10/28/2025\nChief Complaint: Annual physical examination\nProvider: Dr. Sarah Chen MD\nBlood Pressure: 134/86 mmHg\nAssessment: Routine annual exam. Continue current medications." },
 ];
 
-type SuccessState = { docId: string; name: string; classification: string; eventCount: number; extractionPath: "mock" | "ocr_stub" };
+type SuccessState = { docId: string; name: string; classification: string; eventCount: number; extractionPath: "mock" | "ocr_stub" | "ai_extracted" };
 
 export default function Upload() {
-  const router = useRouter();
+  const toast = useToast();  const router = useRouter();
   const addDoc = useStore((s) => s.addDoc);
   const replaceDoc = useStore((s) => s.replaceDoc);
   const addEvents = useStore((s) => s.addEvents);
+  const addMeds = useStore((s) => s.addMeds);
+  const addConditions = useStore((s) => s.addConditions);
+  const addAllergies = useStore((s) => s.addAllergies);
+  const addLabs = useStore((s) => s.addLabs);
+  const addEncounters = useStore((s) => s.addEncounters);
 
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState(0);
   const [busyName, setBusyName] = useState("");
   const [success, setSuccess] = useState<SuccessState | null>(null);
 
-  const process = async (name: string, ocrText?: string) => {
+  const process = async (
+    name: string,
+    ocrText?: string,
+    fileAsset?: { uri: string; name: string; mimeType: string },
+  ) => {
     setSuccess(null);
+    const fileUri = fileAsset?.uri;
     const doc: MedDocument = {
-      id: `doc-${Date.now()}`, fileName: name, mimeType: "application/pdf",
+      id: `doc-${Date.now()}`, fileName: name, mimeType: fileAsset?.mimeType ?? "application/pdf",
       uploadedAt: new Date().toISOString(), classification: "Pending…", extractionStatus: "processing",
+      ...(fileUri ? { fileUri } : {}),
     };
     addDoc(doc);
     setBusy(true);
@@ -48,14 +60,21 @@ export default function Upload() {
     const stepTimer2 = setTimeout(() => setStep(2), 1100);
 
     try {
-      const { updated, events, extractionPath } = await extractDocument(doc, ocrText);
+      const result = await extractDocument(doc, ocrText, fileAsset);
+      const { updated, events, medications, conditions, allergies, labs, encounters, extractionPath } = result;
       clearTimeout(stepTimer1);
       clearTimeout(stepTimer2);
       replaceDoc(doc.id, updated);
       if (events.length > 0) addEvents(events);
+      if (medications?.length) addMeds(medications);
+      if (conditions?.length) addConditions(conditions);
+      if (allergies?.length) addAllergies(allergies);
+      if (labs?.length) addLabs(labs);
+      if (encounters?.length) addEncounters(encounters);
       setBusy(false);
       setSuccess({ docId: doc.id, name, classification: updated.classification, eventCount: events.length, extractionPath });
-    } catch {
+      toast.success("Document processed successfully!");    } catch (error) {
+      toast.error("Failed to process document. Please try again.");
       clearTimeout(stepTimer1);
       clearTimeout(stepTimer2);
       setBusy(false);
@@ -63,18 +82,45 @@ export default function Upload() {
   };
 
   const pickFile = async () => {
+    const isWeb = typeof document !== "undefined";
+
+    if (isWeb) {
+      // Web: use a hidden <input type="file"> to get a real File object with a blob URI
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/pdf,image/*";
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        const uri = URL.createObjectURL(file);
+        process(file.name, undefined, { uri, name: file.name, mimeType: file.type || "application/pdf" });
+      };
+      input.click();
+      return;
+    }
+
+    // Native (iOS / Android): use Expo document picker
     try {
       const DP = await import("expo-document-picker");
       const res = await DP.getDocumentAsync({ type: ["application/pdf", "image/*"], copyToCacheDirectory: true });
-      if (!res.canceled && res.assets?.[0]) { process(res.assets[0].name); return; }
-    } catch { /* picker unavailable on web */ }
+      if (!res.canceled && res.assets?.[0]) {
+        const asset = res.assets[0];
+        process(asset.name, undefined, { uri: asset.uri, name: asset.name, mimeType: asset.mimeType ?? "application/pdf" });
+        return;
+      }
+    } catch (e) {
+      console.warn("[VitaLink] Document picker failed:", e);
+    }
     process(`upload_${Date.now()}.pdf`);
   };
 
   return (
     <ScrollView style={st.wrap} contentContainerStyle={st.cnt}>
+      <TouchableOpacity style={st.backBtn} onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <Ionicons name="arrow-back" size={22} color={C.t1} />
+      </TouchableOpacity>
       <Text style={st.h}>Add a Medical Record</Text>
-      <Text style={st.sub}>Upload any document — VitaLink extracts structured data and adds it to your records and timeline automatically.</Text>
+      <Text style={st.sub}>Upload any document — Second Opinion extracts structured data and adds it to your records and timeline automatically.</Text>
 
       {/* Processing state */}
       {busy && (
@@ -109,9 +155,17 @@ export default function Upload() {
             <Text style={st.provenanceT}>Added to Records &amp; Timeline · Patient-controlled · Not shared without consent</Text>
           </View>
           <View style={st.pathRow}>
-            <Ionicons name={success.extractionPath === "ocr_stub" ? "scan-outline" : "flask-outline"} size={12} color={success.extractionPath === "ocr_stub" ? C.pri : C.t3} />
-            <Text style={[st.pathT, success.extractionPath === "ocr_stub" && { color: C.pri, fontWeight: "600" }]}>
-              {success.extractionPath === "ocr_stub" ? "OCR text path · structured extraction" : "Mock extraction path"}
+            <Ionicons
+              name={success.extractionPath === "ai_extracted" ? "sparkles-outline" : success.extractionPath === "ocr_stub" ? "scan-outline" : "flask-outline"}
+              size={12}
+              color={success.extractionPath !== "mock" ? C.pri : C.t3}
+            />
+            <Text style={[st.pathT, success.extractionPath !== "mock" && { color: C.pri, fontWeight: "600" }]}>
+              {success.extractionPath === "ai_extracted"
+                ? "AI extracted · Claude + OCR pipeline"
+                : success.extractionPath === "ocr_stub"
+                ? "OCR text path · structured extraction"
+                : "Mock extraction path"}
             </Text>
           </View>
           <View style={st.successActs}>
@@ -124,12 +178,12 @@ export default function Upload() {
       {/* Upload methods */}
       <View style={st.methods}>
         <TouchableOpacity style={[st.method, busy && st.methodDim]} activeOpacity={0.8} onPress={pickFile} disabled={busy}>
-          <View style={[st.mI, { backgroundColor: C.pri + "15" }]}><Ionicons name="document-outline" size={28} color={C.pri} /></View>
+          <View style={[st.mI, { backgroundColor: C.priFaint }]}><Ionicons name="document-outline" size={28} color={C.pri} /></View>
           <Text style={st.mT}>Choose File</Text>
           <Text style={st.mS}>PDF or image</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[st.method, busy && st.methodDim]} activeOpacity={0.8} onPress={() => process(`camera_scan_${Date.now()}.jpg`)} disabled={busy}>
-          <View style={[st.mI, { backgroundColor: C.imaging + "15" }]}><Ionicons name="camera-outline" size={28} color={C.imaging} /></View>
+          <View style={[st.mI, { backgroundColor: colorOpacity('imaging', 8) }]}><Ionicons name="camera-outline" size={28} color={C.imaging} /></View>
           <Text style={st.mT}>Scan Document</Text>
           <Text style={st.mS}>Take a photo</Text>
         </TouchableOpacity>
@@ -162,6 +216,7 @@ export default function Upload() {
 const st = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: C.bg },
   cnt: { padding: S.xl },
+  backBtn: { marginBottom: S.lg, width: 36, height: 36, alignItems: "center", justifyContent: "center" },
   h: { fontSize: F.xxl, fontWeight: "700", color: C.t1, letterSpacing: -0.5, marginBottom: S.sm },
   sub: { fontSize: F.md, color: C.t2, lineHeight: 22, marginBottom: S.xxl },
 
@@ -172,9 +227,9 @@ const st = StyleSheet.create({
   stepRow: { flexDirection: "row", gap: S.sm },
   stepDot: { flex: 1, height: 3, borderRadius: 2 },
 
-  success: { backgroundColor: C.okBg, borderColor: C.ok + "40", borderWidth: 1, marginBottom: S.xl, padding: S.lg },
+  success: { backgroundColor: C.okBg, borderColor: C.ok, borderWidth: 1, marginBottom: S.xl, padding: S.lg },
   successTop: { flexDirection: "row", alignItems: "flex-start", gap: S.md, marginBottom: S.sm },
-  successIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.ok + "15", alignItems: "center", justifyContent: "center" },
+  successIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.okBg, alignItems: "center", justifyContent: "center" },
   successT: { fontSize: F.md, fontWeight: "700", color: C.ok },
   successS: { fontSize: F.sm, color: C.t2, marginTop: 2 },
   provenanceRow: { flexDirection: "row", alignItems: "flex-start", gap: S.xs, marginBottom: S.md },
@@ -195,7 +250,7 @@ const st = StyleSheet.create({
   dN: { fontSize: F.sm, fontWeight: "600", color: C.t1 },
   dSubRow: { flexDirection: "row", alignItems: "center", gap: S.xs, marginTop: 2 },
   dSub: { fontSize: F.xs, color: C.t3 },
-  ocrBadge: { backgroundColor: C.pri + "15", borderRadius: R.pill, paddingHorizontal: 5, paddingVertical: 1 },
+  ocrBadge: { backgroundColor: C.priFaint, borderRadius: R.pill, paddingHorizontal: 5, paddingVertical: 1 },
   ocrBadgeT: { fontSize: 9, fontWeight: "700", color: C.pri, letterSpacing: 0.4 },
   pathRow: { flexDirection: "row", alignItems: "center", gap: S.xs, marginTop: S.xs },
   pathT: { fontSize: F.xs, color: C.t3 },

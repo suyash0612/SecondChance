@@ -1,7 +1,9 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import type {
   Patient, MedDocument, Medication, Condition, Allergy,
   LabResult, Encounter, TimelineEvent, DoctorSummary, FilterCategory,
+  AuthUser, Account, Vital, Appointment, DarkModePref,
 } from "./types";
 export { extractDocument as mockExtract } from "./extract";
 
@@ -12,6 +14,7 @@ export { extractDocument as mockExtract } from "./extract";
 const PAT: Patient = {
   id: "p1", firstName: "Maria", lastName: "Santos",
   dateOfBirth: "1978-03-15", sex: "Female",
+  bloodType: "O+",
   phone: "(555) 014-2389", email: "maria.santos@email.com",
   emergencyContact: { name: "Carlos Santos", phone: "(555) 014-2390", relationship: "Spouse" },
   insurance: "Blue Cross Blue Shield", memberId: "XYZ-12345678",
@@ -80,7 +83,43 @@ const TL: TimelineEvent[] = [
   { id: "t15", date: "2020-03-15", type: "diagnosis", title: "Diagnosed: Hypertension", description: "I10 — Started on lisinopril.", importance: "significant", isMilestone: true, source: "extracted", bodySystem: "cardiovascular", provider: "Dr. James Miller" },
 ];
 
-const DISCLAIMER = "Auto-generated from patient-uploaded records by VitaLink. Not medical advice. Verify with your clinician.";
+const VITALS_DEMO: Vital[] = [
+  { id: "v1", type: "bp", value: "134", value2: "86", unit: "mmHg", date: "2025-10-28", note: "After annual physical" },
+  { id: "v2", type: "bp", value: "128", value2: "82", unit: "mmHg", date: "2025-10-15" },
+  { id: "v3", type: "bp", value: "136", value2: "88", unit: "mmHg", date: "2025-09-15" },
+  { id: "v4", type: "glucose", value: "138", unit: "mg/dL", date: "2025-10-15", note: "Fasting" },
+  { id: "v5", type: "glucose", value: "145", unit: "mg/dL", date: "2025-09-20", note: "Fasting" },
+  { id: "v6", type: "hr", value: "72", unit: "bpm", date: "2025-10-28" },
+  { id: "v7", type: "weight", value: "168", unit: "lbs", date: "2025-10-28" },
+  { id: "v8", type: "weight", value: "171", unit: "lbs", date: "2025-09-15" },
+];
+
+const APPTS_DEMO: Appointment[] = [
+  { id: "ap1", date: "2026-05-12", time: "10:30", provider: "Dr. Aisha Patel", specialty: "Endocrinology", facility: "Mercy Endocrine Clinic", reason: "Diabetes 6-month follow-up", status: "upcoming" },
+  { id: "ap2", date: "2026-06-03", time: "14:00", provider: "Dr. Sarah Chen", specialty: "Primary Care", facility: "Downtown Family Medicine", reason: "Annual wellness visit", status: "upcoming" },
+  { id: "ap3", date: "2025-10-28", time: "09:00", provider: "Dr. Sarah Chen", specialty: "Primary Care", facility: "Downtown Family Medicine", reason: "Annual physical", status: "completed" },
+];
+
+const DISCLAIMER = "Auto-generated from patient-uploaded records by Second Opinion. Not medical advice. Verify with your clinician.";
+
+const sortTL = (a: TimelineEvent[]) => [...a].sort((x, y) => new Date(y.date).getTime() - new Date(x.date).getTime());
+
+// ── Demo account (pre-seeded) ─────────────────────────────────────────────────
+const DEMO_ACCOUNT: Account = {
+  email: "maria.santos@email.com",
+  password: "demo1234",
+  patient: PAT,
+  docs: DOCS,
+  meds: MEDS,
+  conditions: CONDS,
+  allergies: ALRG,
+  labs: LABS,
+  encounters: ENCS,
+  timeline: sortTL(TL),
+  vitals: VITALS_DEMO,
+  appointments: APPTS_DEMO,
+  hasSeenOnboarding: true,
+};
 
 function fmtDate(d: string) {
   return new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -108,6 +147,15 @@ function makeSummary(s: Pick<Store, "conditions" | "meds" | "allergies" | "labs"
 // ════════════════════════════════════════════════════════════════
 
 interface Store {
+  // Auth
+  authUser: AuthUser | null;
+  accounts: Account[];
+  login: (email: string, password: string) => boolean;
+  signup: (data: { firstName: string; lastName: string; email: string; password: string; dateOfBirth: string; sex: string; phone: string }) => boolean;
+  logout: () => void;
+  markOnboardingSeen: () => void;
+
+  // Patient data
   patient: Patient;
   docs: MedDocument[];
   meds: Medication[];
@@ -116,55 +164,286 @@ interface Store {
   labs: LabResult[];
   encounters: Encounter[];
   timeline: TimelineEvent[];
+  vitals: Vital[];
+  appointments: Appointment[];
   summary: DoctorSummary | null;
   filter: FilterCategory;
   search: string;
+  darkMode: DarkModePref;
+
+  // Actions
   loadDemo: () => void;
   addDoc: (d: MedDocument) => void;
   replaceDoc: (id: string, d: MedDocument) => void;
+  deleteDoc: (id: string) => void;
   addEvents: (e: TimelineEvent[]) => void;
+  addMeds: (m: Medication[]) => void;
+  addConditions: (c: Condition[]) => void;
+  addAllergies: (a: Allergy[]) => void;
+  addLabs: (l: LabResult[]) => void;
+  addEncounters: (e: Encounter[]) => void;
+
+  // Manual CRUD
+  addMedManual: (m: Omit<Medication, "id" | "source" | "confidence">) => void;
+  deleteMed: (id: string) => void;
+  addConditionManual: (c: Omit<Condition, "id" | "source" | "confidence">) => void;
+  deleteCondition: (id: string) => void;
+  addAllergyManual: (a: Omit<Allergy, "id" | "source">) => void;
+  deleteAllergy: (id: string) => void;
+
+  // Vitals
+  addVital: (v: Omit<Vital, "id">) => void;
+  deleteVital: (id: string) => void;
+
+  // Appointments
+  addAppointment: (a: Omit<Appointment, "id">) => void;
+  updateAppointment: (id: string, patch: Partial<Appointment>) => void;
+  deleteAppointment: (id: string) => void;
+
+  // Settings
+  setDarkMode: (pref: DarkModePref) => void;
   setFilter: (f: FilterCategory) => void;
   setSearch: (s: string) => void;
   genSummary: () => void;
   filtered: () => TimelineEvent[];
 }
 
-const sortTL = (a: TimelineEvent[]) => [...a].sort((x, y) => new Date(y.date).getTime() - new Date(x.date).getTime());
+function syncAccount(s: { authUser: AuthUser | null; accounts: Account[] }, patch: Partial<Account>): Account[] {
+  if (!s.authUser) return s.accounts;
+  return s.accounts.map((acc) =>
+    acc.email === s.authUser!.email ? { ...acc, ...patch } : acc,
+  );
+}
 
-export const useStore = create<Store>((set, get) => ({
-  patient: PAT, docs: [], meds: [], conditions: [], allergies: [],
-  labs: [], encounters: [], timeline: [], summary: null,
-  filter: "all", search: "",
+const EMPTY_PATIENT: Patient = {
+  id: "", firstName: "", lastName: "", dateOfBirth: "", sex: "", phone: "", email: "",
+};
 
-  loadDemo: () => set({
-    patient: PAT, docs: DOCS, meds: MEDS, conditions: CONDS,
-    allergies: ALRG, labs: LABS, encounters: ENCS,
-    timeline: sortTL(TL), summary: makeSummary({ conditions: CONDS, meds: MEDS, allergies: ALRG, labs: LABS, encounters: ENCS }),
-  }),
+export const useStore = create<Store>()(
+  persist(
+    (set, get) => ({
+      // Auth state
+      authUser: null,
+      accounts: [DEMO_ACCOUNT],
 
-  addDoc: (d) => set((s) => ({ docs: [d, ...s.docs] })),
-  replaceDoc: (id, d) => set((s) => ({ docs: s.docs.map((x) => x.id === id ? d : x) })),
-  addEvents: (e) => set((s) => ({ timeline: sortTL([...e, ...s.timeline]) })),
-  setFilter: (f) => set({ filter: f }),
-  setSearch: (s) => set({ search: s }),
+      login: (email, password) => {
+        const acc = get().accounts.find(
+          (a) => a.email.toLowerCase() === email.toLowerCase() && a.password === password,
+        );
+        if (!acc) return false;
+        set({
+          authUser: { email: acc.email },
+          patient: acc.patient,
+          docs: acc.docs,
+          meds: acc.meds,
+          conditions: acc.conditions,
+          allergies: acc.allergies,
+          labs: acc.labs,
+          encounters: acc.encounters,
+          timeline: acc.timeline,
+          vitals: acc.vitals ?? [],
+          appointments: acc.appointments ?? [],
+          summary: null,
+        });
+        return true;
+      },
 
-  genSummary: () => { const s = get(); set({ summary: makeSummary(s) }); },
+      signup: (data) => {
+        const exists = get().accounts.find((a) => a.email.toLowerCase() === data.email.toLowerCase());
+        if (exists) return false;
+        const newPatient: Patient = {
+          id: `p-${Date.now()}`,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          dateOfBirth: data.dateOfBirth,
+          sex: data.sex,
+          phone: data.phone,
+          email: data.email,
+        };
+        const newAccount: Account = {
+          email: data.email,
+          password: data.password,
+          patient: newPatient,
+          docs: [], meds: [], conditions: [], allergies: [], labs: [], encounters: [], timeline: [],
+          vitals: [], appointments: [], hasSeenOnboarding: false,
+        };
+        set((s) => ({
+          accounts: [...s.accounts, newAccount],
+          authUser: { email: data.email },
+          patient: newPatient,
+          docs: [], meds: [], conditions: [], allergies: [], labs: [], encounters: [], timeline: [],
+          vitals: [], appointments: [],
+          summary: null,
+        }));
+        return true;
+      },
 
-  filtered: () => {
-    const { timeline, filter, search } = get();
-    let r = timeline;
-    if (filter !== "all") {
-      const map: Record<string, string[]> = {
-        visits: ["encounter", "er_visit"], diagnoses: ["diagnosis"],
-        medications: ["medication_start", "medication_stop"],
-        labs: ["lab_result"], procedures: ["procedure", "surgery"], imaging: ["imaging"],
-      };
-      r = r.filter((e) => (map[filter] || []).includes(e.type));
+      logout: () => set({
+        authUser: null,
+        patient: EMPTY_PATIENT,
+        docs: [], meds: [], conditions: [], allergies: [], labs: [], encounters: [], timeline: [],
+        vitals: [], appointments: [],
+        summary: null,
+      }),
+
+      markOnboardingSeen: () => set((s) => ({
+        accounts: syncAccount(s, { hasSeenOnboarding: true }),
+      })),
+
+      // Patient data
+      patient: EMPTY_PATIENT, docs: [], meds: [], conditions: [], allergies: [],
+      labs: [], encounters: [], timeline: [], vitals: [], appointments: [], summary: null,
+      filter: "all", search: "", darkMode: "system",
+
+      loadDemo: () => set({
+        patient: PAT, docs: DOCS, meds: MEDS, conditions: CONDS,
+        allergies: ALRG, labs: LABS, encounters: ENCS,
+        timeline: sortTL(TL), vitals: VITALS_DEMO, appointments: APPTS_DEMO,
+        summary: makeSummary({ conditions: CONDS, meds: MEDS, allergies: ALRG, labs: LABS, encounters: ENCS }),
+      }),
+
+      addDoc: (d) => set((s) => {
+        const docs = [d, ...s.docs];
+        return { docs, accounts: syncAccount(s, { docs }) };
+      }),
+      replaceDoc: (id, d) => set((s) => {
+        const docs = s.docs.map((x) => x.id === id ? d : x);
+        return { docs, accounts: syncAccount(s, { docs }) };
+      }),
+      deleteDoc: (id) => set((s) => {
+        const docs = s.docs.filter((d) => d.id !== id);
+        return { docs, accounts: syncAccount(s, { docs }) };
+      }),
+      addEvents: (e) => set((s) => {
+        const timeline = sortTL([...e, ...s.timeline]);
+        return { timeline, accounts: syncAccount(s, { timeline }) };
+      }),
+      addMeds: (m) => set((s) => {
+        const meds = [...m, ...s.meds];
+        return { meds, accounts: syncAccount(s, { meds }) };
+      }),
+      addConditions: (c) => set((s) => {
+        const conditions = [...c, ...s.conditions];
+        return { conditions, accounts: syncAccount(s, { conditions }) };
+      }),
+      addAllergies: (a) => set((s) => {
+        const allergies = [...a, ...s.allergies];
+        return { allergies, accounts: syncAccount(s, { allergies }) };
+      }),
+      addLabs: (l) => set((s) => {
+        const labs = [...l, ...s.labs];
+        return { labs, accounts: syncAccount(s, { labs }) };
+      }),
+      addEncounters: (e) => set((s) => {
+        const encounters = [...e, ...s.encounters];
+        return { encounters, accounts: syncAccount(s, { encounters }) };
+      }),
+
+      // Manual CRUD
+      addMedManual: (m) => set((s) => {
+        const med: Medication = { ...m, id: `m-${Date.now()}`, source: "manual", confidence: 1.0 };
+        const meds = [med, ...s.meds];
+        return { meds, accounts: syncAccount(s, { meds }) };
+      }),
+      deleteMed: (id) => set((s) => {
+        const meds = s.meds.filter((m) => m.id !== id);
+        return { meds, accounts: syncAccount(s, { meds }) };
+      }),
+      addConditionManual: (c) => set((s) => {
+        const cond: Condition = { ...c, id: `c-${Date.now()}`, source: "manual", confidence: 1.0 };
+        const conditions = [cond, ...s.conditions];
+        return { conditions, accounts: syncAccount(s, { conditions }) };
+      }),
+      deleteCondition: (id) => set((s) => {
+        const conditions = s.conditions.filter((c) => c.id !== id);
+        return { conditions, accounts: syncAccount(s, { conditions }) };
+      }),
+      addAllergyManual: (a) => set((s) => {
+        const allergy: Allergy = { ...a, id: `a-${Date.now()}`, source: "manual" };
+        const allergies = [allergy, ...s.allergies];
+        return { allergies, accounts: syncAccount(s, { allergies }) };
+      }),
+      deleteAllergy: (id) => set((s) => {
+        const allergies = s.allergies.filter((a) => a.id !== id);
+        return { allergies, accounts: syncAccount(s, { allergies }) };
+      }),
+
+      // Vitals
+      addVital: (v) => set((s) => {
+        const vital: Vital = { ...v, id: `v-${Date.now()}` };
+        const vitals = [vital, ...s.vitals].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return { vitals, accounts: syncAccount(s, { vitals }) };
+      }),
+      deleteVital: (id) => set((s) => {
+        const vitals = s.vitals.filter((v) => v.id !== id);
+        return { vitals, accounts: syncAccount(s, { vitals }) };
+      }),
+
+      // Appointments
+      addAppointment: (a) => set((s) => {
+        const appt: Appointment = { ...a, id: `ap-${Date.now()}` };
+        const appointments = [...s.appointments, appt].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        return { appointments, accounts: syncAccount(s, { appointments }) };
+      }),
+      updateAppointment: (id, patch) => set((s) => {
+        const appointments = s.appointments.map((a) => a.id === id ? { ...a, ...patch } : a);
+        return { appointments, accounts: syncAccount(s, { appointments }) };
+      }),
+      deleteAppointment: (id) => set((s) => {
+        const appointments = s.appointments.filter((a) => a.id !== id);
+        return { appointments, accounts: syncAccount(s, { appointments }) };
+      }),
+
+      setDarkMode: (pref) => set({ darkMode: pref }),
+      setFilter: (f) => set({ filter: f }),
+      setSearch: (s) => set({ search: s }),
+
+      genSummary: () => { const s = get(); set({ summary: makeSummary(s) }); },
+
+      filtered: () => {
+        const { timeline, filter, search } = get();
+        let r = timeline;
+        if (filter !== "all") {
+          const map: Record<string, string[]> = {
+            visits: ["encounter", "er_visit"], diagnoses: ["diagnosis"],
+            medications: ["medication_start", "medication_stop"],
+            labs: ["lab_result"], procedures: ["procedure", "surgery"], imaging: ["imaging"],
+          };
+          r = r.filter((e) => (map[filter] || []).includes(e.type));
+        }
+        if (search) {
+          const q = search.toLowerCase();
+          r = r.filter((e) => e.title.toLowerCase().includes(q) || (e.description || "").toLowerCase().includes(q) || (e.provider || "").toLowerCase().includes(q));
+        }
+        return r;
+      },
+    }),
+    {
+      name: "second-opinion-v1",
+      storage: createJSONStorage(() => {
+        // Use localStorage on web, fallback to memory on native
+        if (typeof window !== "undefined" && window.localStorage) {
+          return window.localStorage;
+        }
+        // In-memory fallback
+        const mem: Record<string, string> = {};
+        return { getItem: (k) => mem[k] ?? null, setItem: (k, v) => { mem[k] = v; }, removeItem: (k) => { delete mem[k]; } };
+      }),
+      partialize: (state) => ({
+        authUser: state.authUser,
+        accounts: state.accounts,
+        patient: state.patient,
+        docs: state.docs,
+        meds: state.meds,
+        conditions: state.conditions,
+        allergies: state.allergies,
+        labs: state.labs,
+        encounters: state.encounters,
+        timeline: state.timeline,
+        vitals: state.vitals,
+        appointments: state.appointments,
+        darkMode: state.darkMode,
+      }),
     }
-    if (search) {
-      const q = search.toLowerCase();
-      r = r.filter((e) => e.title.toLowerCase().includes(q) || (e.description || "").toLowerCase().includes(q) || (e.provider || "").toLowerCase().includes(q));
-    }
-    return r;
-  },
-}));
+  )
+);

@@ -1,12 +1,19 @@
 {
   "expo": {
-    "name": "VitaLink",
-    "slug": "vitalink",
+    "name": "Second Opinion",
+    "slug": "second-opinion",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "scheme": "vitalink",
-    "web": { "bundler": "metro", "output": "single" },
+    "scheme": "secondopinion",
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "name": "Second Opinion",
+      "shortName": "2nd Opinion",
+      "description": "Your personal health records, organized and ready",
+      "themeColor": "#0D5E56",
+      "backgroundColor": "#FAFAF7"
+    },
     "plugins": ["expo-router"],
     "ios": { "supportsTablet": true },
     "android": {}

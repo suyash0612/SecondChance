@@ -1,16 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../../lib/store";
 import { Card, Badge, SourceBadge, SectionHeader } from "../../components/UI";
-import { C, S, F, R, shadow, sourceLabel } from "../../lib/theme";
+import { DeleteConfirmModal } from "../../components/DeleteConfirmModal";
+import { C, S, F, R, shadow, sourceLabel, colorOpacity } from "../../lib/theme";
 
 function ConfidenceBadge({ value }: { value: number }) {
   const pct = Math.round(value * 100);
   const color = pct >= 90 ? C.ok : pct >= 75 ? C.warn : C.err;
+  const colorName = pct >= 90 ? "ok" : pct >= 75 ? "warn" : "err";
   return (
-    <View style={[st.conf, { backgroundColor: color + "18" }]}>
+    <View style={[st.conf, { backgroundColor: colorOpacity(colorName, 12) }]}>
       <Ionicons name="shield-checkmark-outline" size={11} color={color} />
       <Text style={[st.confT, { color }]}>{pct}% confidence</Text>
     </View>
@@ -30,10 +32,22 @@ export default function RecordDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const doc = useStore((s) => s.docs.find((d) => d.id === id));
+  const deleteDoc = useStore((s) => s.deleteDoc);
   const meds = useStore((s) => s.meds.filter((m) => m.sourceDocId === id));
   const conditions = useStore((s) => s.conditions.filter((c) => c.sourceDocId === id));
   const labs = useStore((s) => s.labs.filter((l) => l.sourceDocId === id));
   const encounters = useStore((s) => s.encounters.filter((e) => e.sourceDocId === id));
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleDelete = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    setShowDeleteConfirm(false);
+    deleteDoc(id!);
+    router.replace("/(tabs)/records" as any);
+  };
 
   if (!doc) {
     return (
@@ -50,8 +64,23 @@ export default function RecordDetail() {
   const uploadDate = new Date(doc.uploadedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const hasExtracted = doc.extractionStatus === "completed";
 
+  const noExtractedData = conditions.length === 0 && meds.length === 0 && labs.length === 0 && encounters.length === 0;
+  const isMock = doc.extractedProvider === "Provider (extracted)" || doc.extractedProvider === "Unknown Provider";
+
   return (
+    <>
     <ScrollView style={st.wrap} contentContainerStyle={st.cnt}>
+      {/* Back button and actions */}
+      <View style={st.backBtnRow}>
+        <TouchableOpacity style={st.backBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)/records" as any)}>
+          <Ionicons name="arrow-back" size={22} color={C.t1} />
+          <Text style={st.backBtnT}>Records</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={st.deleteBtn} onPress={handleDelete}>
+          <Ionicons name="trash-outline" size={20} color={C.err} />
+        </TouchableOpacity>
+      </View>
+
       {/* Header */}
       <Card style={st.header}>
         <View style={st.hRow}>
@@ -77,6 +106,31 @@ export default function RecordDetail() {
         {doc.extractedProvider && <Row label="Provider" value={doc.extractedProvider} />}
         {doc.extractedFacility && <Row label="Facility" value={doc.extractedFacility} />}
         <Row label="Extraction" value={hasExtracted ? "Completed" : doc.extractionStatus} />
+      </Card>
+
+      {/* Document Preview */}
+      <Card style={st.section}>
+        <Text style={st.secTitle}>Document Preview</Text>
+        {doc.fileUri && typeof window !== "undefined" ? (
+          <View style={st.pdfWrap}>
+            <iframe
+              src={doc.fileUri}
+              style={{ width: "100%", height: 500, border: `1px solid ${C.brd}`, borderRadius: 8 } as any}
+              title="Document Preview"
+              onError={() => console.warn("PDF failed to load")}
+            />
+          </View>
+        ) : (
+          <View style={st.pdfFallback}>
+            <Ionicons name={doc.fileUri ? "alert-circle-outline" : "document-outline"} size={32} color={doc.fileUri ? C.warn : C.t3} />
+            <Text style={[st.pdfFallbackT, doc.fileUri && { color: C.warn }]}>
+              {doc.fileUri ? "Preview unavailable" : "No file attached"}
+            </Text>
+            <Text style={st.pdfFallbackS}>
+              {doc.fileUri ? "The document preview has expired. Re-upload the file to view it again." : "This record was created without a file attachment."}
+            </Text>
+          </View>
+        )}
       </Card>
 
       {/* Extracted Conditions */}
@@ -156,22 +210,56 @@ export default function RecordDetail() {
         </Card>
       )}
 
+      {/* Empty extraction state */}
+      {hasExtracted && noExtractedData && (
+        <Card style={st.noDataCard}>
+          <View style={st.noDataRow}>
+            <Ionicons name={isMock ? "cloud-offline-outline" : "information-circle-outline"} size={20} color={C.warn} />
+            <View style={{ flex: 1 }}>
+              <Text style={st.noDataT}>{isMock ? "Backend not reached — limited extraction" : "No structured data found"}</Text>
+              <Text style={st.noDataS}>
+                {isMock
+                  ? "Start the Python backend (port 8000) and re-upload for AI-powered extraction of conditions, medications, and labs."
+                  : "This document did not contain recognisable clinical entities."}
+              </Text>
+            </View>
+          </View>
+        </Card>
+      )}
+
       {/* Provenance footer */}
       <View style={st.prov}>
         <Ionicons name="shield-checkmark-outline" size={13} color={C.t3} />
         <Text style={st.provT}>
-          Source: {sourceLabel(doc.extractionStatus === "completed" ? "extracted" : "uploaded")} · VitaLink prototype
+          Source: {sourceLabel(doc.extractionStatus === "completed" ? "extracted" : "uploaded")} · Second Opinion
         </Text>
       </View>
 
       <View style={{ height: 40 }} />
     </ScrollView>
+    <DeleteConfirmModal
+      visible={showDeleteConfirm}
+      title="Delete Record"
+      message="Are you sure you want to delete this record? This cannot be undone."
+      itemName={doc?.fileName}
+      onConfirm={handleDeleteConfirm}
+      onCancel={() => setShowDeleteConfirm(false)}
+    />
+    </>
   );
 }
 
 const st = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: C.bg },
   cnt: { padding: S.lg },
+  backBtnRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: S.lg },
+  backBtn: { flexDirection: "row", alignItems: "center", gap: S.xs },
+  backBtnT: { fontSize: F.md, color: C.pri, fontWeight: "500" },
+  deleteBtn: { padding: S.sm, marginRight: -S.xs },
+  noDataCard: { backgroundColor: C.warnBg, borderColor: C.warn, borderWidth: 1, marginBottom: S.md, padding: S.lg },
+  noDataRow: { flexDirection: "row", alignItems: "flex-start", gap: S.md },
+  noDataT: { fontSize: F.sm, fontWeight: "600", color: C.warn, marginBottom: 4 },
+  noDataS: { fontSize: F.xs, color: C.warn, lineHeight: 18, opacity: 0.85 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", gap: S.lg, backgroundColor: C.bg },
   emptyT: { fontSize: F.lg, color: C.t2 },
   back: { paddingVertical: S.sm, paddingHorizontal: S.lg, backgroundColor: C.priFaint, borderRadius: R.md },
@@ -194,4 +282,8 @@ const st = StyleSheet.create({
   confT: { fontSize: 10, fontWeight: "600" },
   prov: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: S.xs, marginTop: S.md },
   provT: { fontSize: F.xs, color: C.t3 },
+  pdfWrap: { borderRadius: 8, overflow: "hidden", marginTop: S.sm },
+  pdfFallback: { alignItems: "center", padding: S.xl, gap: S.sm },
+  pdfFallbackT: { fontSize: F.sm, fontWeight: "600", color: C.t3 },
+  pdfFallbackS: { fontSize: F.xs, color: C.t3, textAlign: "center", marginTop: S.xs },
 });

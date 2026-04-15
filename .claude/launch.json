@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "VitaLink Frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "web"],
+      "port": 8081
+    },
+    {
+      "name": "VitaLink Backend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "backend"],
+      "port": 8000
+    }
+  ]
+}

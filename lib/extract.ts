@@ -1,10 +1,18 @@
-import type { MedDocument, TimelineEvent } from "./types";
+import type { MedDocument, TimelineEvent, Medication, Condition, Allergy, LabResult, Encounter } from "./types";
+
+// ── Backend URL — change to your deployed URL in production ───────────────────
+const BACKEND_URL = "http://localhost:8000";
 
 // ── Return shape ──────────────────────────────────────────────────────────────
 export interface ExtractionResult {
   updated: MedDocument;
   events: TimelineEvent[];
-  extractionPath: "mock" | "ocr_stub";
+  medications?: Medication[];
+  conditions?: Condition[];
+  allergies?: Allergy[];
+  labs?: LabResult[];
+  encounters?: Encounter[];
+  extractionPath: "mock" | "ocr_stub" | "ai_extracted";
 }
 
 // ── Classification map ────────────────────────────────────────────────────────
@@ -100,11 +108,82 @@ function parseOcrFields(text: string, key: string): ParsedFields {
   }
 }
 
+// ── Real backend extraction ───────────────────────────────────────────────────
+async function extractFromBackend(
+  doc: MedDocument,
+  fileAsset?: { uri: string; name: string; mimeType: string },
+): Promise<ExtractionResult | null> {
+  try {
+    if (!fileAsset?.uri) {
+      console.log("[VitaLink] No fileAsset URI — skipping backend");
+      return null;
+    }
+
+    console.log("[VitaLink] Calling backend with file:", fileAsset.name, fileAsset.uri.slice(0, 60));
+
+    const form = new FormData();
+    const isWeb = typeof document !== "undefined";
+
+    if (isWeb) {
+      console.log("[VitaLink] Web mode — fetching blob from URI");
+      const blobRes = await fetch(fileAsset.uri);
+      const blob = await blobRes.blob();
+      console.log("[VitaLink] Blob fetched:", blob.size, "bytes", blob.type);
+      const file = new File([blob], fileAsset.name || doc.fileName, {
+        type: fileAsset.mimeType || blob.type || "application/octet-stream",
+      });
+      form.append("file", file);
+    } else {
+      form.append("file", {
+        uri: fileAsset.uri,
+        name: fileAsset.name || doc.fileName,
+        type: fileAsset.mimeType || doc.mimeType,
+      } as any);
+    }
+
+    form.append("doc_id", doc.id);
+
+    console.log("[VitaLink] POSTing to", `${BACKEND_URL}/extract`);
+    const res = await fetch(`${BACKEND_URL}/extract`, { method: "POST", body: form });
+    console.log("[VitaLink] Backend response status:", res.status);
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.warn("[VitaLink] Backend error:", res.status, err);
+      return null;
+    }
+
+    const data = await res.json();
+    console.log("[VitaLink] Extraction success — events:", data.events?.length, "conditions:", data.conditions?.length, "meds:", data.medications?.length);
+
+    return {
+      updated:     { ...data.updated, extractionPath: "ai_extracted" } as MedDocument,
+      events:      data.events      ?? [],
+      medications: data.medications ?? [],
+      conditions:  data.conditions  ?? [],
+      allergies:   data.allergies   ?? [],
+      labs:        data.labs        ?? [],
+      encounters:  data.encounters  ?? [],
+      extractionPath: "ai_extracted",
+    };
+  } catch (e) {
+    console.error("[VitaLink] extractFromBackend threw:", e);
+    return null;
+  }
+}
+
 // ── Main extraction entry point ───────────────────────────────────────────────
 export async function extractDocument(
   doc: MedDocument,
   ocrText?: string,
+  fileAsset?: { uri: string; name: string; mimeType: string },
 ): Promise<ExtractionResult> {
+  // Try real backend first (only when a real file asset is provided)
+  if (fileAsset) {
+    const backendResult = await extractFromBackend(doc, fileAsset);
+    if (backendResult) return backendResult;
+  }
+
   await new Promise((r) => setTimeout(r, 1200 + Math.random() * 800));
 
   const today    = new Date().toISOString().split("T")[0];
