@@ -1,0 +1,22 @@
+[     392ms] [ERROR] Error: Module implementation must be a class
+    at e.registerWebModule (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:556:177)
+    at https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:615:1805
+    at g (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:2:1779)
+    at d (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:2:1275)
+    at i (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:2:500)
+    at https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:614:1493
+    at g (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:2:1779)
+    at d (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:2:1275)
+    at i (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:2:500)
+    at https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:613:190 @ https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:289
+[     401ms] Error: Module implementation must be a class
+    at e.registerWebModule (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:556:177)
+    at https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:615:1805
+    at g (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:2:1779)
+    at d (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:2:1275)
+    at i (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:2:500)
+    at https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:614:1493
+    at g (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:2:1779)
+    at d (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:2:1275)
+    at i (https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:2:500)
+    at https://suyash0612.github.io/SecondChance/_expo/static/js/web/entry-ec25fdacd0d0c9951db357f2ee020914.js:613:190

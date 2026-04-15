@@ -1,0 +1,10 @@
+- generic [ref=e2]:
+  - generic [ref=e10]:
+    - generic [ref=e11]: 
+    - generic [ref=e12]: No Summary Generated
+    - generic [ref=e13]: Tap below to create a doctor-ready summary from your records.
+    - generic [ref=e14] [cursor=pointer]:
+      - generic [ref=e15]: 
+      - generic [ref=e16]: Generate Summary
+  - generic:
+    - img

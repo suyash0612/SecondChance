@@ -1,0 +1,116 @@
+- generic [ref=e11]:
+  - generic [ref=e203]:
+    - generic [ref=e204] [cursor=pointer]:
+      - generic [ref=e205]: 
+      - generic [ref=e206]: Home
+    - generic [ref=e207] [cursor=pointer]:
+      - generic [ref=e209]: 
+      - generic [ref=e210]: Generate Doctor Summary
+      - generic [ref=e211]: Create a shareable summary for your next appointment
+      - generic [ref=e212]:
+        - generic [ref=e213]: Open Summary
+        - generic [ref=e214]: 
+    - generic [ref=e216]:
+      - generic [ref=e217]: Active Conditions
+      - generic [ref=e218]: 3 conditions
+    - generic [ref=e219]:
+      - generic [ref=e220]:
+        - generic [ref=e222]:
+          - generic [ref=e223]: Type 2 Diabetes Mellitus
+          - generic [ref=e224]: Since 2021-06
+        - generic [ref=e226]: managed
+      - generic [ref=e227]:
+        - generic [ref=e229]:
+          - generic [ref=e230]: Essential Hypertension
+          - generic [ref=e231]: Since 2020-03
+        - generic [ref=e233]: managed
+      - generic [ref=e234]:
+        - generic [ref=e236]:
+          - generic [ref=e237]: Hyperlipidemia
+          - generic [ref=e238]: Since 2022-01
+        - generic [ref=e240]: managed
+    - generic [ref=e242]:
+      - generic [ref=e243]: Current Medications
+      - generic [ref=e244]: 3 active
+    - generic [ref=e245]:
+      - generic [ref=e248]:
+        - generic [ref=e249]: Metformin 500mg
+        - generic [ref=e250]: Twice daily · Type 2 Diabetes
+      - generic [ref=e253]:
+        - generic [ref=e254]: Lisinopril 10mg
+        - generic [ref=e255]: Once daily · Hypertension
+      - generic [ref=e258]:
+        - generic [ref=e259]: Atorvastatin 20mg
+        - generic [ref=e260]: At bedtime · High cholesterol
+    - generic [ref=e262]:
+      - generic [ref=e263]: Allergies
+      - generic [ref=e264]: 2 recorded
+    - generic [ref=e265]:
+      - generic [ref=e266]:
+        - generic [ref=e268]:
+          - generic [ref=e269]: Penicillin
+          - generic [ref=e270]: Hives, throat swelling
+        - generic [ref=e272]: severe
+      - generic [ref=e273]:
+        - generic [ref=e275]:
+          - generic [ref=e276]: Sulfa drugs
+          - generic [ref=e277]: Rash
+        - generic [ref=e279]: moderate
+    - generic [ref=e281]:
+      - generic [ref=e282]: Recent Abnormal Results
+      - generic [ref=e283]: 4 flagged
+    - generic [ref=e284]:
+      - generic [ref=e285]:
+        - generic [ref=e287]:
+          - generic [ref=e288]: Hemoglobin A1c
+          - generic [ref=e289]: Oct 15, 2025
+        - generic [ref=e290]: 7.2 %
+      - generic [ref=e291]:
+        - generic [ref=e293]:
+          - generic [ref=e294]: Hemoglobin A1c
+          - generic [ref=e295]: Apr 10, 2025
+        - generic [ref=e296]: 7.8 %
+      - generic [ref=e297]:
+        - generic [ref=e299]:
+          - generic [ref=e300]: LDL Cholesterol
+          - generic [ref=e301]: Oct 15, 2025
+        - generic [ref=e302]: 142 mg/dL
+      - generic [ref=e303]:
+        - generic [ref=e305]:
+          - generic [ref=e306]: Fasting Glucose
+          - generic [ref=e307]: Oct 15, 2025
+        - generic [ref=e308]: 138 mg/dL
+    - generic [ref=e309]:
+      - generic [ref=e310]: 
+      - generic [ref=e311]: For visit preparation only. Not medical advice. Review with your clinician.
+  - tablist [ref=e168]:
+    - link "⏷ ⏷ Home" [ref=e169] [cursor=pointer]:
+      - /url: /
+      - generic:
+        - generic [ref=e171]: ⏷
+        - generic [ref=e173]: ⏷
+      - generic [ref=e174]: Home
+    - link "⏷ ⏷ Timeline" [ref=e175] [cursor=pointer]:
+      - /url: /timeline
+      - generic:
+        - generic [ref=e177]: ⏷
+        - generic [ref=e179]: ⏷
+      - generic [ref=e180]: Timeline
+    - link "⏷ ⏷ Records" [ref=e181] [cursor=pointer]:
+      - /url: /records
+      - generic:
+        - generic [ref=e183]: ⏷
+        - generic [ref=e185]: ⏷
+      - generic [ref=e186]: Records
+    - link "⏷ ⏷ Visit" [active] [ref=e187] [cursor=pointer]:
+      - /url: /visit
+      - generic:
+        - generic [ref=e189]: ⏷
+        - generic [ref=e191]: ⏷
+      - generic [ref=e192]: Visit
+    - link "⏷ ⏷ Profile" [ref=e193] [cursor=pointer]:
+      - /url: /profile
+      - generic:
+        - generic [ref=e195]: ⏷
+        - generic [ref=e197]: ⏷
+      - generic [ref=e198]: Profile

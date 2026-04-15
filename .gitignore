@@ -4,3 +4,4 @@ dist/
 backend/.env
 backend/venv/
 .claude/settings.local.json
+.env

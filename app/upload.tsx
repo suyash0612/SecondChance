@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useStore } from "../lib/store";
@@ -82,10 +82,8 @@ export default function Upload() {
   };
 
   const pickFile = async () => {
-    const isWeb = typeof document !== "undefined";
-
-    if (isWeb) {
-      // Web: use a hidden <input type="file"> to get a real File object with a blob URI
+    // Web: use a hidden <input type="file">
+    if (Platform.OS === "web") {
       const input = document.createElement("input");
       input.type = "file";
       input.accept = "application/pdf,image/*";
@@ -101,10 +99,9 @@ export default function Upload() {
 
     // Native (iOS / Android): use Expo document picker
     try {
-      const DP = await import("expo-document-picker");
-      const res = await DP.getDocumentAsync({ type: ["application/pdf", "image/*"], copyToCacheDirectory: true });
-      if (!res.canceled && res.assets?.[0]) {
-        const asset = res.assets[0];
+      const { pickDocument } = await import("./native-picker");
+      const asset = await pickDocument();
+      if (asset) {
         process(asset.name, undefined, { uri: asset.uri, name: asset.name, mimeType: asset.mimeType ?? "application/pdf" });
         return;
       }
