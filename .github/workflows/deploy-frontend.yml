@@ -32,6 +32,9 @@ jobs:
         env:
           EXPO_PUBLIC_BACKEND_URL: https://secondchance-xvxk.onrender.com
 
+      - name: Create .nojekyll file
+        run: touch dist/.nojekyll
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
