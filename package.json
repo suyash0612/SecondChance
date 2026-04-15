@@ -9,7 +9,7 @@
     "web": "expo start --web",
     "ios": "expo start --ios",
     "android": "expo start --android",
-    "build": "npx expo export --platform web && touch dist/.nojekyll",
+    "build": "npx expo export --platform web && touch dist/.nojekyll && node fix-paths.js",
     "deploy": "npm run build && gh-pages -d dist"
   },
   "dependencies": {
@@ -32,7 +32,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.0",
     "@types/react": "~18.3.0",
-    "gh-pages": "^6.1.1",
+    "gh-pages": "^6.3.0",
     "typescript": "~5.3.0"
   }
 }
