@@ -7,14 +7,18 @@
     "userInterfaceStyle": "light",
     "scheme": "secondopinion",
     "web": {
+      "publicPath": "/SecondChance/",
       "favicon": "./assets/favicon.png",
       "name": "Second Opinion",
       "shortName": "2nd Opinion",
       "description": "Your personal health records, organized and ready",
       "themeColor": "#0D5E56",
-      "backgroundColor": "#FAFAF7"
+      "backgroundColor": "#FAFAF7",
+      "output": "single"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      ["expo-router", { "origin": "https://suyash0612.github.io/SecondChance/" }]
+    ],
     "ios": { "supportsTablet": true },
     "android": {}
   }
