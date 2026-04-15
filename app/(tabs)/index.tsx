@@ -36,7 +36,9 @@ export default function Home() {
           <Text style={st.greet}>Good {greet}, {p.firstName}</Text>
           <Text style={st.greetS}>Your records are organized and ready</Text>
         </View>
-        <View style={st.av}><Text style={st.avT}>{p.firstName[0]}{p.lastName[0]}</Text></View>
+        <TouchableOpacity style={st.av} onPress={() => router.push("/(tabs)/profile" as any)}>
+          <Text style={st.avT}>{p.firstName[0]}{p.lastName[0]}</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Prepare for Visit CTA */}
@@ -160,8 +162,8 @@ const st = StyleSheet.create({
   avT: { fontSize: F.lg, fontWeight: "700", color: "#fff" },
   cta: { flexDirection: "row", alignItems: "center", backgroundColor: C.bgDark, borderRadius: R.lg, padding: S.lg, marginBottom: S.xl, gap: S.md, ...shadow },
   ctaI: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.priLt, alignItems: "center", justifyContent: "center" },
-  ctaT: { fontSize: F.lg, fontWeight: "700", color: C.tInv, letterSpacing: -0.2 },
-  ctaS: { fontSize: F.sm, color: C.priMut, marginTop: 2 },
+  ctaT: { fontSize: F.lg, fontWeight: "700", color: "#FFFFFF", letterSpacing: -0.2 },
+  ctaS: { fontSize: F.sm, color: "#FFFFFF", marginTop: 2 },
   stats: { flexDirection: "row", gap: S.sm, marginBottom: S.xl },
   acts: { flexDirection: "row", gap: S.sm, marginBottom: S.lg },
   actBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: S.sm, paddingVertical: S.md, backgroundColor: C.priFaint, borderRadius: R.md, borderWidth: 1, borderColor: C.priMut },

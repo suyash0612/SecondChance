@@ -23,7 +23,7 @@ export function SectionHeader({ title, sub, action, onAction }: { title: string;
 export function Badge({ label, color, small }: { label: string; color: string; small?: boolean }) {
   return (
     <View style={[st.badge, { backgroundColor: colorWithOpacity(color, 18) }, small && st.badgeSm]}>
-      <Text style={[st.badgeT, { color: "#FFFFFF" }, small && { fontSize: 9 }]}>{label}</Text>
+      <Text style={[st.badgeT, { color: C.t1 }, small && { fontSize: 9 }]}>{label}</Text>
     </View>
   );
 }

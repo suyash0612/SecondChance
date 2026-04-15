@@ -1,0 +1,151 @@
+- generic [ref=e2]:
+  - generic [ref=e11]:
+    - generic [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - generic [ref=e20]: Good morning, Maria
+          - generic [ref=e21]: Your records are organized and ready
+        - generic [ref=e23]: MS
+      - generic [ref=e24] [cursor=pointer]:
+        - generic [ref=e26]: 
+        - generic [ref=e27]:
+          - generic [ref=e28]: Prepare for Your Visit
+          - generic [ref=e29]: Generate a doctor-ready summary
+        - generic [ref=e30]: 
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e34]: 
+          - generic [ref=e35]: "5"
+          - generic [ref=e36]: Records
+        - generic [ref=e37]:
+          - generic [ref=e39]: 
+          - generic [ref=e40]: "3"
+          - generic [ref=e41]: Meds
+        - generic [ref=e42]:
+          - generic [ref=e44]: 
+          - generic [ref=e45]: "3"
+          - generic [ref=e46]: Conditions
+        - generic [ref=e47]:
+          - generic [ref=e49]: 
+          - generic [ref=e50]: "2"
+          - generic [ref=e51]: Allergies
+      - generic [ref=e52]:
+        - generic [ref=e53] [cursor=pointer]:
+          - generic [ref=e54]: 
+          - generic [ref=e55]: Upload
+        - generic [ref=e56] [cursor=pointer]:
+          - generic [ref=e57]: 
+          - generic [ref=e58]: Summary
+        - generic [ref=e59] [cursor=pointer]:
+          - generic [ref=e60]: 
+          - generic [ref=e61]: Timeline
+      - generic [ref=e62]:
+        - generic [ref=e63] [cursor=pointer]:
+          - generic [ref=e65]: 
+          - generic [ref=e66]: Vitals
+        - generic [ref=e67] [cursor=pointer]:
+          - generic [ref=e69]: 
+          - generic [ref=e70]: Appointments
+        - generic [ref=e71] [cursor=pointer]:
+          - generic [ref=e73]: 
+          - generic [ref=e74]: Add Data
+        - generic [ref=e75] [cursor=pointer]:
+          - generic [ref=e77]: 
+          - generic [ref=e78]: Emergency
+      - generic [ref=e79] [cursor=pointer]:
+        - generic [ref=e81]: 
+        - generic [ref=e82]:
+          - generic [ref=e83]: Next Appointment
+          - generic [ref=e84]: Dr. Aisha Patel
+          - generic [ref=e85]: Tue, May 12 at 10:30
+        - generic [ref=e86]: 
+      - generic [ref=e87]:
+        - generic [ref=e88]:
+          - generic [ref=e89]: 
+          - generic [ref=e90]: 4 Abnormal Lab Results
+        - generic [ref=e91]:
+          - generic [ref=e92]: Hemoglobin A1c
+          - generic [ref=e93]: 7.2 %
+        - generic [ref=e94]:
+          - generic [ref=e95]: Hemoglobin A1c
+          - generic [ref=e96]: 7.8 %
+        - generic [ref=e97]:
+          - generic [ref=e98]: LDL Cholesterol
+          - generic [ref=e99]: 142 mg/dL
+      - generic [ref=e100]:
+        - generic [ref=e102]: Recent Activity
+        - generic [ref=e104] [cursor=pointer]: See All
+      - generic [ref=e109]:
+        - generic [ref=e110]:
+          - generic [ref=e112]: Visit
+          - generic [ref=e114]: AI Extracted
+        - generic [ref=e115]: Annual Physical — Dr. Chen
+        - generic [ref=e116]: Routine exam. BP 134/86. Statin adjustment discussed.
+        - generic [ref=e117]:
+          - generic [ref=e118]:
+            - generic [ref=e119]: 
+            - generic [ref=e120]: Oct 28, 2025
+          - generic [ref=e121]:
+            - generic [ref=e122]: 
+            - generic [ref=e123]: Dr. Sarah Chen
+      - generic [ref=e129]:
+        - generic [ref=e130]:
+          - generic [ref=e132]: Visit
+          - generic [ref=e134]: AI Extracted
+        - generic [ref=e135]: Diabetes Follow-Up
+        - generic [ref=e136]: A1c improved 7.8→7.2%. Continue current regimen.
+        - generic [ref=e137]:
+          - generic [ref=e138]:
+            - generic [ref=e139]: 
+            - generic [ref=e140]: Oct 20, 2025
+          - generic [ref=e141]:
+            - generic [ref=e142]: 
+            - generic [ref=e143]: Dr. Aisha Patel
+      - generic [ref=e148]:
+        - generic [ref=e149]:
+          - generic [ref=e151]: Lab
+          - generic [ref=e153]: AI Extracted
+        - generic [ref=e154]: "A1c: 7.2% (Improving)"
+        - generic [ref=e155]: Down from 7.8%. Still above target 4.0–5.6%.
+        - generic [ref=e157]:
+          - generic [ref=e158]: 
+          - generic [ref=e159]: Oct 15, 2025
+      - generic [ref=e160]:
+        - generic [ref=e161]: 
+        - generic [ref=e162]: For visit preparation only. Not medical advice. Review with your clinician.
+      - generic [ref=e163]:
+        - generic [ref=e164]: 
+        - generic [ref=e165]: Demo account — Sample patient data
+    - tablist [ref=e168]:
+      - link "⏷ ⏷ Home" [ref=e169] [cursor=pointer]:
+        - /url: /
+        - generic:
+          - generic [ref=e171]: ⏷
+          - generic [ref=e173]: ⏷
+        - generic [ref=e174]: Home
+      - link "⏷ ⏷ Timeline" [ref=e175] [cursor=pointer]:
+        - /url: /timeline
+        - generic:
+          - generic [ref=e177]: ⏷
+          - generic [ref=e179]: ⏷
+        - generic [ref=e180]: Timeline
+      - link "⏷ ⏷ Records" [ref=e181] [cursor=pointer]:
+        - /url: /records
+        - generic:
+          - generic [ref=e183]: ⏷
+          - generic [ref=e185]: ⏷
+        - generic [ref=e186]: Records
+      - link "⏷ ⏷ Visit" [ref=e187] [cursor=pointer]:
+        - /url: /visit
+        - generic:
+          - generic [ref=e189]: ⏷
+          - generic [ref=e191]: ⏷
+        - generic [ref=e192]: Visit
+      - link "⏷ ⏷ Profile" [ref=e193] [cursor=pointer]:
+        - /url: /profile
+        - generic:
+          - generic [ref=e195]: ⏷
+          - generic [ref=e197]: ⏷
+        - generic [ref=e198]: Profile
+  - generic:
+    - img

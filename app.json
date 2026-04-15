@@ -7,8 +7,6 @@
     "userInterfaceStyle": "light",
     "scheme": "secondopinion",
     "web": {
-      "bundler": "metro",
-      "output": "static",
       "favicon": "./assets/favicon.png",
       "name": "Second Opinion",
       "shortName": "2nd Opinion",
@@ -17,7 +15,6 @@
       "backgroundColor": "#FAFAF7"
     },
     "plugins": ["expo-router"],
-    "experiments": { "baseUrl": "/SecondChance" },
     "ios": { "supportsTablet": true },
     "android": {}
   }
