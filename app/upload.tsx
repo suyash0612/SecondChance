@@ -99,11 +99,9 @@ export default function Upload() {
 
     // Native (iOS / Android): use Expo document picker
     try {
-      // eslint-disable-next-line global-require
-      const DP = require("expo-document-picker");
-      const res = await DP.getDocumentAsync({ type: ["application/pdf", "image/*"], copyToCacheDirectory: true });
-      if (!res.canceled && res.assets?.[0]) {
-        const asset = res.assets[0];
+      const { pickDocument } = await import("./native-picker");
+      const asset = await pickDocument();
+      if (asset) {
         process(asset.name, undefined, { uri: asset.uri, name: asset.name, mimeType: asset.mimeType ?? "application/pdf" });
         return;
       }
