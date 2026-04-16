@@ -24,7 +24,8 @@ load_dotenv(backend_dir / '.env')
 
 logger = logging.getLogger(__name__)
 
-_client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+_api_key = os.environ.get("GEMINI_API_KEY", "")
+_client = genai.Client(api_key=_api_key) if _api_key else None
 
 # ── Shared instructions (used by both text and vision pipelines) ──────────────
 
@@ -115,6 +116,9 @@ def extract_with_vision(file_bytes: bytes, mime_type: str, doc_id: str, file_nam
     Send the raw file directly to Gemini Vision — no OCR step needed.
     Works for scanned PDFs, JPEGs, PNGs, and any image Gemini can read.
     """
+    if not _client:
+        raise RuntimeError("GEMINI_API_KEY is not configured. Set it in the Render dashboard under Environment Variables.")
+
     from google.genai import types as gtypes
 
     vision_prompt = (
@@ -137,6 +141,9 @@ def extract_with_vision(file_bytes: bytes, mime_type: str, doc_id: str, file_nam
 
 def extract_with_claude(ocr_text: str, doc_id: str, file_name: str) -> Dict[str, Any]:
     """Call Gemini to extract structured clinical data from OCR text."""
+    if not _client:
+        raise RuntimeError("GEMINI_API_KEY is not configured. Set it in the Render dashboard under Environment Variables.")
+
     prompt = _PROMPT_PREFIX + f'\n<document filename="{file_name}">\n{ocr_text}\n</document>'
     response = _client.models.generate_content(
         model="gemini-2.5-flash",

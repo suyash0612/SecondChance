@@ -98,21 +98,24 @@ async def extract_document(
     # ── Try native text extraction first (fast, free) ─────────────────────────
     ocr_text = extract_text(file_bytes, mime_type, filename)
 
-    if ocr_text.strip():
-        logger.info("Native text extraction: %d chars — using text pipeline", len(ocr_text))
-        extracted = extract_with_claude(ocr_text, assigned_doc_id, filename)
-    else:
-        # Scanned PDF or image — send file directly to Gemini Vision
-        logger.info("No native text found — switching to Gemini Vision pipeline")
-        if mime_type not in (
-            "application/pdf", "image/jpeg", "image/jpg",
-            "image/png", "image/webp", "image/heic", "image/heif",
-        ):
-            raise HTTPException(
-                status_code=422,
-                detail=f"Unsupported file type '{mime_type}'. Upload a PDF or image (JPEG, PNG, WEBP).",
-            )
-        extracted = extract_with_vision(file_bytes, mime_type, assigned_doc_id, filename)
+    try:
+        if ocr_text.strip():
+            logger.info("Native text extraction: %d chars — using text pipeline", len(ocr_text))
+            extracted = extract_with_claude(ocr_text, assigned_doc_id, filename)
+        else:
+            # Scanned PDF or image — send file directly to Gemini Vision
+            logger.info("No native text found — switching to Gemini Vision pipeline")
+            if mime_type not in (
+                "application/pdf", "image/jpeg", "image/jpg",
+                "image/png", "image/webp", "image/heic", "image/heif",
+            ):
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Unsupported file type '{mime_type}'. Upload a PDF or image (JPEG, PNG, WEBP).",
+                )
+            extracted = extract_with_vision(file_bytes, mime_type, assigned_doc_id, filename)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
     logger.info(
         "Done — conditions:%d meds:%d labs:%d events:%d",
