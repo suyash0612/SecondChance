@@ -127,7 +127,7 @@ def extract_with_vision(file_bytes: bytes, mime_type: str, doc_id: str, file_nam
     )
 
     response = _client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-1.5-flash",
         contents=[
             gtypes.Part.from_bytes(data=file_bytes, mime_type=mime_type),
             vision_prompt,
@@ -146,7 +146,7 @@ def extract_with_claude(ocr_text: str, doc_id: str, file_name: str) -> Dict[str,
 
     prompt = _PROMPT_PREFIX + f'\n<document filename="{file_name}">\n{ocr_text}\n</document>'
     response = _client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-1.5-flash",
         contents=prompt,
     )
     return _parse_and_build(response.text.strip(), doc_id, file_name)
