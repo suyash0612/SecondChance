@@ -162,7 +162,8 @@ async function extractFromBackend(
     console.log("[VitaLink] Extraction success — events:", data.events?.length, "conditions:", data.conditions?.length, "meds:", data.medications?.length);
 
     return {
-      updated:     { ...data.updated, extractionPath: "ai_extracted" } as MedDocument,
+      // Preserve fileUri from the original doc — backend doesn't know about it
+      updated:     { ...data.updated, fileUri: doc.fileUri, extractionPath: "ai_extracted" } as MedDocument,
       events:      data.events      ?? [],
       medications: data.medications ?? [],
       conditions:  data.conditions  ?? [],

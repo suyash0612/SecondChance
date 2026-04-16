@@ -90,8 +90,15 @@ export default function Upload() {
       input.onchange = async () => {
         const file = input.files?.[0];
         if (!file) return;
-        const uri = URL.createObjectURL(file);
-        process(file.name, undefined, { uri, name: file.name, mimeType: file.type || "application/pdf" });
+        // Use data URL (base64) so PDF preview persists across page refreshes.
+        // Blob URLs expire when the session ends; data URLs survive in localStorage.
+        const dataUri = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        process(file.name, undefined, { uri: dataUri, name: file.name, mimeType: file.type || "application/pdf" });
       };
       input.click();
       return;
