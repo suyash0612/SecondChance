@@ -1,0 +1,13 @@
+{
+  "name": "Second Opinion",
+  "short_name": "2nd Opinion",
+  "description": "Your personal health records, organized and ready",
+  "start_url": "/SecondChance/",
+  "display": "standalone",
+  "background_color": "#FAFAF7",
+  "theme_color": "#0D5E56",
+  "icons": [
+    { "src": "/SecondChance/favicon.ico", "sizes": "any", "type": "image/x-icon" },
+    { "src": "/SecondChance/favicon.png", "sizes": "192x192", "type": "image/png" }
+  ]
+}
